@@ -44,6 +44,9 @@ class Shopkeeper(Document):
     registered_at = DateTimeField(default=datetime.utcnow)
     is_active = BooleanField(default=True)
     location = EmbeddedDocumentField(Location)
+    flagged = BooleanField(default=False)  # Flagged by platform admin for review
+    flag_reason = StringField(max_length=500)  # Reason for flagging
+    flagged_at = DateTimeField()  # When it was flagged
     
     meta = {
         'collection': 'shopkeepers',
