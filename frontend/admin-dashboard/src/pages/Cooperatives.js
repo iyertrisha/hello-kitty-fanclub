@@ -21,8 +21,14 @@ const Cooperatives = () => {
     try {
       setLoading(true);
       const data = await apiService.getCooperatives();
-      const coopList = data.data || data || [];
-      setCooperatives(coopList);
+      // Backend returns {cooperatives: [...]}
+      const coopList = data.cooperatives || data.data || data || [];
+      // Map backend fields to frontend expected format
+      const mappedCoops = coopList.map(coop => ({
+        ...coop,
+        revenue_split: coop.revenue_split_percent || coop.revenue_split || 0,
+      }));
+      setCooperatives(mappedCoops);
     } catch (error) {
       console.error('Error loading cooperatives:', error);
     } finally {
@@ -37,10 +43,11 @@ const Cooperatives = () => {
     }
 
     try {
+      // Backend expects 'revenue_split_percent' field
       await apiService.createCooperative({
         name: formData.name,
         description: formData.description,
-        revenue_split: parseFloat(formData.revenue_split) || 0,
+        revenue_split_percent: parseFloat(formData.revenue_split) || 0,
       });
       alert('Cooperative created successfully');
       setShowCreateModal(false);
