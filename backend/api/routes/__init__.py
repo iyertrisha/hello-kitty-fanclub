@@ -14,6 +14,7 @@ def register_blueprints(app):
     from api.routes.blockchain import blockchain_bp
     from api.routes.cooperative import cooperative_bp
     from api.routes.admin import admin_bp
+    from api.routes.supplier import supplier_bp
     
     # Register blueprints
     app.register_blueprint(transactions_bp, url_prefix='/api/transactions')
@@ -22,4 +23,5 @@ def register_blueprints(app):
     app.register_blueprint(blockchain_bp, url_prefix='/api/blockchain')
     app.register_blueprint(cooperative_bp, url_prefix='/api/cooperative')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
+    app.register_blueprint(supplier_bp, url_prefix='/api/supplier')
 
