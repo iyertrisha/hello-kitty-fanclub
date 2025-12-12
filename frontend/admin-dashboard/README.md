@@ -1,329 +1,190 @@
-# Admin Dashboard
+# KiranaChain Admin Dashboards
 
-React.js admin dashboard for managing shopkeepers, cooperatives, analytics, and blockchain logs.
+Two role-based admin dashboards for the KiranaChain platform.
 
-## Prerequisites
+## Dashboard Architecture
 
-Before you begin, ensure you have the following installed:
+This application provides two distinct dashboards:
 
-- **Node.js** (v16 or higher)
-- **npm** or **yarn**
-- **Modern web browser** (Chrome, Firefox, Safari, Edge)
+### 1. Platform Admin Dashboard (`/platform-admin`)
+**Who:** Platform operators/maintainers  
+**Access Level:** Read-only + Flagging only
 
-## Installation Steps
+#### Features:
+- **Overview** - Platform health monitoring + Credit Score Summary
+- **Store Management** - View stores, flag issues, credit score filtering
+- **Blockchain Logs** - All transactions (read-only) with PolygonScan links
+- **Analytics** - Platform insights + Credit Score Distribution
 
-### 1. Navigate to the project directory
+#### What Platform Admin CAN do:
+- View all platform data (read-only)
+- Flag stores for review
+- Monitor platform health
+- Generate reports
+
+#### What Platform Admin CANNOT do:
+- Add/edit/delete stores
+- Modify transactions
+- Change credit scores
+- Manipulate cooperative data
+
+---
+
+### 2. Aggregator/Cooperative Dashboard (`/aggregator`)
+**Who:** Cooperative managers/coordinators  
+**Access Level:** Cooperative data only
+
+#### Features:
+- **Cooperative Overview** - Health + Member Credit Scores
+- **Geographic Map** - Service area + Member locations with scores
+- **Cooperative Orders** - Order management + Fulfillment
+- **Blockchain Logs** - Cooperative transactions only
+
+#### What Aggregator CAN do:
+- View cooperative members (read-only)
+- Manage cooperative orders
+- View cooperative analytics
+- Coordinate bulk orders
+- View blockchain logs (cooperative only)
+
+#### What Aggregator CANNOT do:
+- View other cooperatives' data
+- Modify individual store data
+- Access platform admin functions
+
+---
+
+## Vishwas Score Integration
+
+ML-based credit score (300-900 range) integrated across all pages:
+
+**Score Ranges:**
+- 🟢 **700-900 (Excellent)** - High creditworthiness
+- 🟡 **500-700 (Good)** - Moderate creditworthiness
+- 🔴 **300-500 (Needs Attention)** - Lower creditworthiness
+
+**Calculated from 5 factors:**
+1. Transaction consistency (25%)
+2. Business growth (20%)
+3. Product diversity (15%)
+4. Cooperative participation (15%)
+5. Repayment history (25%)
+
+---
+
+## URLs
+
+| Dashboard | URL | Description |
+|-----------|-----|-------------|
+| Dashboard Selector | `/` | Choose between dashboards |
+| Platform Admin | `/platform-admin` | Platform monitoring |
+| Platform Stores | `/platform-admin/stores` | Store management |
+| Platform Blockchain | `/platform-admin/blockchain` | All transactions |
+| Platform Analytics | `/platform-admin/analytics` | Platform insights |
+| Aggregator Overview | `/aggregator` | Cooperative health |
+| Geographic Map | `/aggregator/map` | Service area visualization |
+| Cooperative Orders | `/aggregator/orders` | Order management |
+| Aggregator Blockchain | `/aggregator/blockchain` | Cooperative transactions |
+
+---
+
+## Getting Started
+
+### Prerequisites
+- Node.js 16+
+- npm or yarn
+
+### Installation
 
 ```bash
-cd frontend/admin-dashboard
-```
-
-### 2. Install dependencies
-
-```bash
+cd whackiest/frontend/admin-dashboard
 npm install
 ```
 
-or
-
-```bash
-yarn install
-```
-
-### 3. Configure API endpoint
-
-Open `src/services/api.js` and update the `API_BASE_URL`:
-
-```javascript
-const API_BASE_URL = 'http://localhost:5000/api'; // Update to your Flask API URL
-```
-
-For production, update this to your production API URL.
-
-### 4. Environment Variables (Optional)
-
-Create a `.env` file in the root directory:
-
-```env
-REACT_APP_API_URL=http://localhost:5000/api
-```
-
-Then update `src/services/api.js` to use it:
-
-```javascript
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-```
-
-## Running the Application
-
-### Development Mode
-
-Start the development server:
+### Running the Dashboard
 
 ```bash
 npm start
 ```
 
-or
+The application will start at `http://localhost:3000`
 
-```bash
-yarn start
+### Environment Variables
+
+Create a `.env.local` file:
+
+```env
+REACT_APP_API_URL=http://localhost:5000/api
 ```
 
-The application will:
-- Start on `http://localhost:3000`
-- Automatically open in your default browser
-- Hot-reload on file changes
+---
 
-### Production Build
+## Tech Stack
 
-Build the application for production:
+- **React 18** - UI framework
+- **React Router 6** - Routing
+- **Recharts** - Data visualization
+- **React-Leaflet** - Geographic mapping
+- **Axios** - API client
 
-```bash
-npm run build
-```
-
-or
-
-```bash
-yarn build
-```
-
-This creates an optimized production build in the `build/` directory.
-
-### Serve Production Build Locally
-
-After building, you can serve it locally:
-
-```bash
-npm install -g serve
-serve -s build
-```
+---
 
 ## Project Structure
 
 ```
-admin-dashboard/
-├── public/
-│   └── index.html          # HTML template
-├── src/
-│   ├── pages/              # Page components
+src/
+├── pages/
+│   ├── DashboardSelector.js    # Landing page
+│   ├── platform-admin/         # Platform Admin pages
 │   │   ├── Overview.js
 │   │   ├── StoreManagement.js
-│   │   ├── Cooperatives.js
-│   │   ├── Analytics.js
-│   │   └── BlockchainLogs.js
-│   ├── components/         # Reusable components
-│   │   ├── StatsCard.js
-│   │   ├── SalesChart.js
-│   │   ├── StoreTable.js
-│   │   └── CooperativeCard.js
-│   ├── services/          # API services
-│   │   └── api.js
-│   ├── App.js             # Main app component
-│   ├── App.css            # App styles
-│   ├── index.js           # Entry point
-│   └── index.css          # Global styles
-├── package.json
-└── README.md
+│   │   ├── BlockchainLogs.js
+│   │   └── Analytics.js
+│   └── aggregator/             # Aggregator pages
+│       ├── CooperativeOverview.js
+│       ├── GeographicMap.js
+│       ├── CooperativeOrders.js
+│       └── BlockchainLogs.js
+├── layouts/
+│   ├── PlatformAdminLayout.js  # Platform sidebar
+│   └── AggregatorLayout.js     # Aggregator sidebar
+├── components/
+│   ├── CreditScoreWidget.js    # Score summary widget
+│   ├── StatsCard.js            # Statistics card
+│   └── SalesChart.js           # Sales visualization
+└── services/
+    └── api.js                  # API methods
 ```
 
-## Features
+---
 
-### 1. Overview Dashboard
-- Total stores count
-- Transaction statistics (today, week, month)
-- Revenue statistics (today, week, month)
-- Active cooperatives count
-- Recent activity feed
-- Sales trend chart
+## API Endpoints
 
-### 2. Store Management
-- View all shopkeepers/stores
-- Search and filter stores
-- Sort by name, address, credit score, sales, status
-- View, edit, delete stores
-- Credit score display with color coding
+### Platform Admin Endpoints
+- `GET /api/admin/overview` - Platform stats
+- `GET /api/admin/stores` - All stores (read-only)
+- `POST /api/admin/stores/{id}/flag` - Flag store
+- `GET /api/admin/blockchain-logs` - All transactions
+- `GET /api/admin/analytics` - Platform analytics
 
-### 3. Cooperative Management
-- List all cooperatives
-- Create new cooperatives
-- View cooperative members
-- Manage bulk orders
-- Configure revenue split
-- Add/remove members
+### Aggregator Endpoints
+- `GET /api/cooperative/{id}/overview` - Cooperative stats
+- `GET /api/cooperative/{id}/members` - Members (read-only)
+- `GET /api/cooperative/{id}/orders` - Cooperative orders
+- `GET /api/cooperative/{id}/blockchain-logs` - Cooperative transactions
+- `GET /api/cooperative/{id}/map-data` - Geographic data
 
-### 4. Analytics
-- Sales trends chart (area chart)
-- Credit score distribution (bar chart)
-- Revenue by cooperative (pie chart)
-- Transaction volume over time (line chart)
-- Date range filtering (week, month, quarter, year)
+---
 
-### 5. Blockchain Logs
-- View all blockchain transactions
-- Filter by shopkeeper, date range, type
-- Display transaction hash, block number, timestamp
-- Link to PolygonScan explorer
-- Verification status indicators
+## Design Philosophy
 
-## API Integration
+1. **Read-only for admins** - Data ownership by creators
+2. **Blockchain transparency** - All transactions verified
+3. **Cooperative collaboration** - Geographic pooling
+4. **Trust through scores** - Vishwas Score integration
 
-The dashboard connects to the Flask API at `http://localhost:5000/api`. Ensure:
-
-1. **Backend API is running** on port 5000
-2. **CORS is enabled** for the dashboard origin (`http://localhost:3000`)
-3. **API endpoints** match the expected format
-
-### Required API Endpoints
-
-- `GET /api/admin/overview` - Get overview statistics
-- `GET /api/admin/stores` - Get all stores
-- `PUT /api/admin/stores/:id` - Update store
-- `DELETE /api/admin/stores/:id` - Delete store
-- `GET /api/admin/cooperatives` - Get all cooperatives
-- `POST /api/admin/cooperatives` - Create cooperative
-- `PUT /api/admin/cooperatives/:id` - Update cooperative
-- `DELETE /api/admin/cooperatives/:id` - Delete cooperative
-- `GET /api/admin/analytics` - Get analytics data
-- `GET /api/admin/blockchain-logs` - Get blockchain logs
-
-## Authentication
-
-Currently, the dashboard uses a simple token-based authentication stored in localStorage. For production:
-
-1. Implement proper authentication flow
-2. Add login page
-3. Secure API endpoints with JWT tokens
-4. Add role-based access control
-
-To add authentication:
-
-1. Create `src/pages/Login.js`
-2. Update `src/App.js` to check for authentication
-3. Add token to API requests in `src/services/api.js`
-
-## Styling
-
-The dashboard uses:
-- **CSS Modules** for component-specific styles
-- **Recharts** for data visualization
-- **Responsive design** for mobile compatibility
-
-## Troubleshooting
-
-### Common Issues
-
-1. **App won't start**
-   ```bash
-   # Clear cache and reinstall
-   rm -rf node_modules package-lock.json
-   npm install
-   npm start
-   ```
-
-2. **API connection errors**
-   - Check `API_BASE_URL` in `src/services/api.js`
-   - Ensure backend API is running
-   - Check CORS configuration on backend
-   - Check browser console for errors
-
-3. **Charts not rendering**
-   - Ensure Recharts is installed: `npm install recharts`
-   - Check browser console for errors
-   - Verify data format matches chart expectations
-
-4. **Build errors**
-   ```bash
-   # Clear build cache
-   rm -rf build node_modules
-   npm install
-   npm run build
-   ```
-
-5. **Routing issues**
-   - Ensure React Router is installed: `npm install react-router-dom`
-   - Check browser console for route errors
-
-## Testing
-
-### Manual Testing Checklist
-
-- [ ] Overview page loads and displays stats
-- [ ] Store management table displays stores
-- [ ] Search and filter work correctly
-- [ ] Cooperative creation works
-- [ ] Analytics charts render correctly
-- [ ] Blockchain logs display correctly
-- [ ] All API calls work
-- [ ] Responsive design works on mobile
-
-## Deployment
-
-### Deploy to Netlify
-
-1. Build the app: `npm run build`
-2. Drag and drop the `build` folder to Netlify
-3. Configure environment variables in Netlify dashboard
-
-### Deploy to Vercel
-
-1. Install Vercel CLI: `npm install -g vercel`
-2. Run: `vercel`
-3. Follow the prompts
-
-### Deploy to AWS S3 + CloudFront
-
-1. Build the app: `npm run build`
-2. Upload `build` folder contents to S3 bucket
-3. Configure CloudFront distribution
-4. Set up custom domain (optional)
-
-## Environment Variables
-
-Create `.env` file for different environments:
-
-```env
-# Development
-REACT_APP_API_URL=http://localhost:5000/api
-
-# Production
-REACT_APP_API_URL=https://api.yourdomain.com/api
-```
-
-## Browser Support
-
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
-
-## Performance Optimization
-
-- Code splitting with React.lazy()
-- Memoization for expensive components
-- Optimized re-renders
-- Lazy loading for charts
-- Image optimization
-
-## Security Considerations
-
-- Never commit `.env` files
-- Use HTTPS in production
-- Implement proper authentication
-- Validate all API responses
-- Sanitize user inputs
-- Use Content Security Policy headers
-
-## Support
-
-For issues or questions:
-- Check browser console for errors
-- Review API response format
-- Refer to React documentation
-- Check project documentation in `/docs`
+---
 
 ## License
 
-This project is part of the Shopkeeper Management System.
-
+Part of the KiranaChain project.
