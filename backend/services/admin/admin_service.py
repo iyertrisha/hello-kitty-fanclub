@@ -14,7 +14,7 @@ def get_overview_stats():
     Calculate overview statistics
     
     Returns:
-        dict: Overview statistics
+        dict: Overview statistics matching frontend expectations
     """
     # Total stores
     total_stores = Shopkeeper.objects(is_active=True).count()
@@ -43,7 +43,53 @@ def get_overview_stats():
     # Active cooperatives
     active_cooperatives = Cooperative.objects(is_active=True, members__exists=True).count()
     
+    # Sales trend (last 30 days) for chart
+    sales_trend = []
+    for i in range(30):
+        day_start = today_start - timedelta(days=29-i)
+        day_end = day_start + timedelta(days=1)
+        day_sales = sum(
+            t.amount for t in Transaction.objects(
+                type='sale',
+                timestamp__gte=day_start,
+                timestamp__lt=day_end
+            )
+        )
+        sales_trend.append({
+            'date': day_start.isoformat(),
+            'amount': day_sales
+        })
+    
+    # Recent activity (last 10 transactions)
+    recent_transactions = Transaction.objects().order_by('-timestamp').limit(10)
+    recent_activity = []
+    for tx in recent_transactions:
+        activity_type = 'transaction'
+        message = f"{tx.type.capitalize()} transaction of Rs. {tx.amount:.2f}"
+        recent_activity.append({
+            'type': activity_type,
+            'message': message,
+            'timestamp': tx.timestamp.isoformat() if tx.timestamp else None
+        })
+    
+    # Return in format expected by frontend
     return {
+        # Frontend expected format
+        'total_stores': total_stores,
+        'transactions': {
+            'today': today_transactions,
+            'week': week_transactions,
+            'month': month_transactions
+        },
+        'revenue': {
+            'today': today_revenue,
+            'week': week_revenue,
+            'month': month_revenue
+        },
+        'active_cooperatives': active_cooperatives,
+        'sales_trend': sales_trend,
+        'recent_activity': recent_activity,
+        # Additional data (backwards compatible)
         'stores': {
             'total': total_stores,
             'active': total_stores
@@ -54,20 +100,6 @@ def get_overview_stats():
         'cooperatives': {
             'total': total_cooperatives,
             'active': active_cooperatives
-        },
-        'transactions': {
-            'today': {
-                'count': today_transactions,
-                'revenue': today_revenue
-            },
-            'week': {
-                'count': week_transactions,
-                'revenue': week_revenue
-            },
-            'month': {
-                'count': month_transactions,
-                'revenue': month_revenue
-            }
         }
     }
 
@@ -265,7 +297,10 @@ def get_blockchain_logs(filters=None, page=1, page_size=20):
             'shopkeeper_id': str(transaction.shopkeeper_id.id),
             'customer_id': str(transaction.customer_id.id),
             'timestamp': transaction.timestamp.isoformat() if transaction.timestamp else None,
+            # Frontend expects 'transaction_hash', backend has 'blockchain_tx_id'
+            'transaction_hash': transaction.blockchain_tx_id,
             'blockchain_tx_id': transaction.blockchain_tx_id,
+            'block_number': transaction.blockchain_block_number,
             'blockchain_block_number': transaction.blockchain_block_number,
             'status': transaction.status,
             'transcript_hash': transaction.transcript_hash
