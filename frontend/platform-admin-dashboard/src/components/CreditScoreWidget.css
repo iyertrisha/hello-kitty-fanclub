@@ -1,0 +1,245 @@
+.credit-score-widget {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  padding: 28px;
+  margin-bottom: 32px;
+}
+
+.credit-score-widget.platform {
+  border-color: rgba(59, 130, 246, 0.15);
+}
+
+.credit-score-widget.aggregator {
+  border-color: rgba(16, 185, 129, 0.15);
+}
+
+.widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+}
+
+.widget-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.widget-badge {
+  padding: 6px 14px;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.1));
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fbbf24;
+}
+
+.widget-content {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 40px;
+  align-items: center;
+}
+
+@media (max-width: 800px) {
+  .widget-content {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
+/* Score Circle */
+.score-circle-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.score-circle {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 5px solid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.02);
+  transition: all 0.3s;
+}
+
+.score-value {
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.score-max {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-top: 4px;
+}
+
+.score-info {
+  text-align: center;
+}
+
+.score-status {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.score-desc {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Distribution Section */
+.distribution-section {
+  flex: 1;
+}
+
+.distribution-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.distribution-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.distribution-total {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.distribution-bar {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  margin-bottom: 16px;
+}
+
+.bar-segment {
+  transition: width 0.5s ease;
+}
+
+.bar-segment.high {
+  background: linear-gradient(90deg, #34d399, #22c55e);
+}
+
+.bar-segment.medium {
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+}
+
+.bar-segment.low {
+  background: linear-gradient(90deg, #f87171, #ef4444);
+}
+
+.distribution-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.legend-dot.high {
+  background: #34d399;
+}
+
+.legend-dot.medium {
+  background: #fbbf24;
+}
+
+.legend-dot.low {
+  background: #f87171;
+}
+
+.legend-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  min-width: 60px;
+}
+
+.legend-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  min-width: 30px;
+}
+
+.legend-percent {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Quick Stats */
+.quick-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 600px) {
+  .quick-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+.quick-stat {
+  text-align: center;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+}
+
+.quick-stat-value {
+  display: block;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.quick-stat-value.high {
+  color: #34d399;
+}
+
+.quick-stat-value.medium {
+  color: #fbbf24;
+}
+
+.quick-stat-value.low {
+  color: #f87171;
+}
+
+.quick-stat-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
