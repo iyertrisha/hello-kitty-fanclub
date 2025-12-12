@@ -36,12 +36,21 @@ def create_otp_record(email):
     Raises:
         ValidationError: If too many OTP requests
     """
+    # #region agent log
+    import json
+    with open(r'c:\hello-kitty-fanclub\.cursor\debug.log', 'a') as f:
+        f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"otp_service.py:26","message":"create_otp_record entry","data":{"email":email,"timestamp":__import__('time').time()*1000},"timestamp":int(__import__('time').time()*1000)}) + '\n')
+    # #endregion
     # Check rate limiting (max 3 requests per 15 minutes)
     fifteen_minutes_ago = datetime.utcnow() - timedelta(minutes=15)
     recent_otps = OTPVerification.objects(
         email=email,
         created_at__gte=fifteen_minutes_ago
     ).count()
+    # #region agent log
+    with open(r'c:\hello-kitty-fanclub\.cursor\debug.log', 'a') as f:
+        f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"otp_service.py:44","message":"rate limit check","data":{"email":email,"recent_otps":recent_otps,"max_allowed":MAX_OTP_ATTEMPTS,"timestamp":__import__('time').time()*1000},"timestamp":int(__import__('time').time()*1000)}) + '\n')
+    # #endregion
     
     if recent_otps >= MAX_OTP_ATTEMPTS:
         from api.middleware.error_handler import ValidationError
@@ -53,6 +62,10 @@ def create_otp_record(email):
     # Generate new OTP
     otp_code = generate_otp()
     expires_at = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
+    # #region agent log
+    with open(r'c:\hello-kitty-fanclub\.cursor\debug.log', 'a') as f:
+        f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"otp_service.py:54","message":"OTP generated","data":{"email":email,"otp_code":otp_code,"expires_at":str(expires_at),"timestamp":__import__('time').time()*1000},"timestamp":int(__import__('time').time()*1000)}) + '\n')
+    # #endregion
     
     # Create OTP record
     otp_record = OTPVerification(
@@ -61,14 +74,34 @@ def create_otp_record(email):
         expires_at=expires_at
     )
     otp_record.save()
+    # #region agent log
+    with open(r'c:\hello-kitty-fanclub\.cursor\debug.log', 'a') as f:
+        f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"otp_service.py:63","message":"OTP record saved to DB","data":{"email":email,"otp_id":str(otp_record.id),"timestamp":__import__('time').time()*1000},"timestamp":int(__import__('time').time()*1000)}) + '\n')
+    # #endregion
     
     # Send OTP email
+    # #region agent log
+    with open(r'c:\hello-kitty-fanclub\.cursor\debug.log', 'a') as f:
+        f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"B","location":"otp_service.py:66","message":"before send_otp_email","data":{"email":email,"otp_code":otp_code,"timestamp":__import__('time').time()*1000},"timestamp":int(__import__('time').time()*1000)}) + '\n')
+    # #endregion
     try:
         send_otp_email(email, otp_code)
+        # #region agent log
+        with open(r'c:\hello-kitty-fanclub\.cursor\debug.log', 'a') as f:
+            f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"B","location":"otp_service.py:69","message":"send_otp_email returned successfully","data":{"email":email,"timestamp":__import__('time').time()*1000},"timestamp":int(__import__('time').time()*1000)}) + '\n')
+        # #endregion
     except Exception as e:
+        # #region agent log
+        with open(r'c:\hello-kitty-fanclub\.cursor\debug.log', 'a') as f:
+            f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"B","location":"otp_service.py:72","message":"send_otp_email exception","data":{"email":email,"error":str(e),"error_type":type(e).__name__,"timestamp":__import__('time').time()*1000},"timestamp":int(__import__('time').time()*1000)}) + '\n')
+        # #endregion
         logger.error(f"Failed to send OTP email: {e}")
         # Delete the OTP record if email failed
         otp_record.delete()
+        # #region agent log
+        with open(r'c:\hello-kitty-fanclub\.cursor\debug.log', 'a') as f:
+            f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"B","location":"otp_service.py:75","message":"OTP record deleted after email failure","data":{"email":email,"timestamp":__import__('time').time()*1000},"timestamp":int(__import__('time').time()*1000)}) + '\n')
+        # #endregion
         raise
     
     logger.info(f"OTP created for {email}, expires at {expires_at}")
