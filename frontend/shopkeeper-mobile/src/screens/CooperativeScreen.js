@@ -170,30 +170,67 @@ const CooperativeScreen = () => {
                 <Text style={styles.detailLabel}>Description: </Text>
                 {selectedCoop.description || 'No description available'}
               </Text>
-              <Text style={styles.detailText}>
-                <Text style={styles.detailLabel}>Members: </Text>
-                {members.length}
-              </Text>
-              {selectedCoop.revenue_split && (
+              <View style={styles.detailRow}>
+                <View style={styles.detailItem}>
+                  <Text style={styles.detailLabel}>Members</Text>
+                  <Text style={styles.detailValue}>{members.length}</Text>
+                </View>
+                {selectedCoop.revenue_split && (
+                  <View style={styles.detailItem}>
+                    <Text style={styles.detailLabel}>Revenue Split</Text>
+                    <Text style={styles.detailValue}>{selectedCoop.revenue_split}%</Text>
+                  </View>
+                )}
+              </View>
+              {selectedCoop.established && (
                 <Text style={styles.detailText}>
-                  <Text style={styles.detailLabel}>Revenue Split: </Text>
-                  {selectedCoop.revenue_split}%
+                  <Text style={styles.detailLabel}>Established: </Text>
+                  {new Date(selectedCoop.established).toLocaleDateString()}
+                </Text>
+              )}
+              {selectedCoop.total_revenue && (
+                <Text style={styles.detailText}>
+                  <Text style={styles.detailLabel}>Total Revenue: </Text>
+                  ₹{(selectedCoop.total_revenue / 1000).toFixed(0)}K
+                </Text>
+              )}
+              {selectedCoop.total_orders && (
+                <Text style={styles.detailText}>
+                  <Text style={styles.detailLabel}>Total Orders: </Text>
+                  {selectedCoop.total_orders}
                 </Text>
               )}
             </View>
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Members</Text>
+            <Text style={styles.sectionTitle}>
+              Members ({members.length})
+            </Text>
             {members.length > 0 ? (
               members.map((member) => (
                 <View key={member.id} style={styles.memberCard}>
-                  <Text style={styles.memberName}>
-                    {member.name || `Shopkeeper ${member.id}`}
-                  </Text>
+                  <View style={styles.memberHeader}>
+                    <Text style={styles.memberName}>
+                      {member.name || `Shopkeeper ${member.id}`}
+                    </Text>
+                    {member.total_contribution && (
+                      <Text style={styles.memberContribution}>
+                        ₹{(member.total_contribution / 1000).toFixed(0)}K
+                      </Text>
+                    )}
+                  </View>
                   <Text style={styles.memberInfo}>
-                    {member.address || 'No address'}
+                    📍 {member.address || 'No address'}
                   </Text>
+                  {member.phone && (
+                    <Text style={styles.memberInfo}>📞 {member.phone}</Text>
+                  )}
+                  {member.joined_date && (
+                    <Text style={styles.memberInfo}>
+                      📅 Joined: {new Date(member.joined_date).toLocaleDateString()}
+                    </Text>
+                  )}
                 </View>
               ))
             ) : (
@@ -263,11 +300,23 @@ const CooperativeScreen = () => {
                     style={styles.coopCard}
                     onPress={() => loadCooperativeDetails(coop.id)}
                   >
-                    <Text style={styles.coopName}>{coop.name}</Text>
+                    <View style={styles.coopHeader}>
+                      <Text style={styles.coopName}>{coop.name}</Text>
+                      <Text style={styles.coopBadge}>Member</Text>
+                    </View>
                     <Text style={styles.coopInfo}>
-                      {coop.members?.length || 0} members
+                      👥 {coop.members?.length || coop.total_members || 0} members
                     </Text>
-                    <Text style={styles.coopBadge}>Member</Text>
+                    {coop.total_revenue && (
+                      <Text style={styles.coopInfo}>
+                        💰 Total Revenue: ₹{(coop.total_revenue / 1000).toFixed(0)}K
+                      </Text>
+                    )}
+                    {coop.total_orders && (
+                      <Text style={styles.coopInfo}>
+                        📦 {coop.total_orders} orders
+                      </Text>
+                    )}
                   </TouchableOpacity>
                 ))}
               </View>
@@ -279,15 +328,32 @@ const CooperativeScreen = () => {
                 .filter((coop) => !isMember(coop.id))
                 .map((coop) => (
                   <View key={coop.id} style={styles.coopCard}>
-                    <Text style={styles.coopName}>{coop.name}</Text>
-                    <Text style={styles.coopInfo}>
-                      {coop.members?.length || 0} members
+                    <View style={styles.coopHeader}>
+                      <Text style={styles.coopName}>{coop.name}</Text>
+                    </View>
+                    <Text style={styles.coopDescription}>
+                      {coop.description || 'Join this cooperative to benefit from bulk purchasing and shared resources.'}
                     </Text>
+                    <View style={styles.coopStats}>
+                      <Text style={styles.coopInfo}>
+                        👥 {coop.members?.length || coop.total_members || 0} members
+                      </Text>
+                      {coop.revenue_split && (
+                        <Text style={styles.coopInfo}>
+                          💵 Revenue Split: {coop.revenue_split}%
+                        </Text>
+                      )}
+                      {coop.total_orders && (
+                        <Text style={styles.coopInfo}>
+                          📦 {coop.total_orders} orders
+                        </Text>
+                      )}
+                    </View>
                     <TouchableOpacity
                       style={styles.joinButton}
                       onPress={() => handleJoinCooperative(coop.id)}
                     >
-                      <Text style={styles.joinButtonText}>Join</Text>
+                      <Text style={styles.joinButtonText}>Join Cooperative</Text>
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -469,6 +535,50 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     padding: 20,
+  },
+  coopHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  coopDescription: {
+    fontSize: 13,
+    color: '#666',
+    lineHeight: 18,
+    marginBottom: 12,
+  },
+  coopStats: {
+    marginBottom: 12,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginVertical: 12,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#F0F0F0',
+  },
+  detailItem: {
+    alignItems: 'center',
+  },
+  detailValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#007AFF',
+    marginTop: 4,
+  },
+  memberHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  memberContribution: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#34C759',
   },
 });
 
