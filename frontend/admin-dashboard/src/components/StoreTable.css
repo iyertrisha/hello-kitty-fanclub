@@ -120,6 +120,21 @@
   color: #c62828;
 }
 
+.toggle-button {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.toggle-button.deactivate {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.toggle-button.activate {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
 .empty-message {
   text-align: center;
   padding: 40px;
