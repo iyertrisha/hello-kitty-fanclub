@@ -72,3 +72,31 @@ def require_admin(f):
     
     return decorated_function
 
+
+def require_supplier_session(f):
+    """
+    Require supplier session authentication
+    
+    Checks Flask session for supplier_id and attaches supplier to request context
+    
+    Usage:
+        @require_supplier_session
+        def my_route():
+            supplier_id = request.supplier_id
+            ...
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        from flask import session, request
+        
+        supplier_id = session.get('supplier_id')
+        if not supplier_id:
+            raise UnauthorizedError("Authentication required. Please login.")
+        
+        # Attach supplier_id to request for easy access
+        request.supplier_id = supplier_id
+        request.supplier_email = session.get('email')
+        
+        return f(*args, **kwargs)
+    
+    return decorated_function

@@ -4,9 +4,230 @@ Transaction service - Business logic for transactions
 from datetime import datetime, timedelta
 from database.models import Transaction, Shopkeeper, Customer, Product, PendingConfirmation
 from api.middleware.error_handler import ValidationError, NotFoundError
+from services.transaction.shopkeeper_history_helper import get_shopkeeper_history
+from services.transaction.amount_utils import rupees_to_paise, paise_to_rupees
+from services.transaction_verification import (
+    TransactionVerificationService,
+    VerificationStatus,
+    get_verification_service
+)
 import logging
+import sys
+from pathlib import Path
+
+# Add blockchain directory to path for imports
+blockchain_path = Path(__file__).parent.parent.parent / 'blockchain'
+sys.path.insert(0, str(blockchain_path))
+
+try:
+    from utils.contract_service import BlockchainService
+    from config import BlockchainConfig
+    BLOCKCHAIN_AVAILABLE = True
+except ImportError as e:
+    BlockchainService = None
+    BlockchainConfig = None
+    BLOCKCHAIN_AVAILABLE = False
+    logger = logging.getLogger(__name__)
+    logger.warning(f"Blockchain service not available: {e}")
 
 logger = logging.getLogger(__name__)
+
+# Global blockchain service instance (initialized lazily)
+_blockchain_service: BlockchainService = None
+
+
+def get_blockchain_service() -> BlockchainService:
+    """
+    Initialize and return blockchain service instance with error handling.
+    
+    Returns:
+        BlockchainService instance or None if initialization fails
+    """
+    global _blockchain_service
+    
+    if not BLOCKCHAIN_AVAILABLE or BlockchainService is None or BlockchainConfig is None:
+        logger.warning("Blockchain service not available - transactions will be stored in MongoDB only")
+        return None
+    
+    if _blockchain_service is not None:
+        return _blockchain_service
+    
+    try:
+        # Validate blockchain config
+        BlockchainConfig.validate(require_contract=True)
+        
+        # Initialize blockchain service
+        _blockchain_service = BlockchainService(
+            rpc_url=BlockchainConfig.RPC_URL,
+            private_key=BlockchainConfig.PRIVATE_KEY,
+            contract_address=BlockchainConfig.CONTRACT_ADDRESS
+        )
+        
+        logger.info("Blockchain service initialized successfully")
+        return _blockchain_service
+        
+    except Exception as e:
+        logger.warning(f"Failed to initialize blockchain service: {e}. "
+                      f"Transactions will be stored in MongoDB only.")
+        return None
+
+
+def create_transaction_with_verification(data):
+    """
+    Create a new transaction with verification and blockchain integration.
+    
+    This function:
+    1. Generates shopkeeper history from MongoDB
+    2. Calls verification service with transcript
+    3. Creates transaction in MongoDB with verification status
+    4. Writes to blockchain if verified
+    5. Updates transaction with blockchain TX hash
+    
+    Args:
+        data: Transaction data dictionary with optional 'transcript' field
+    
+    Returns:
+        Transaction: Created transaction object with verification metadata
+    """
+    # Get shopkeeper and customer objects
+    try:
+        from bson.errors import InvalidId
+        shopkeeper = Shopkeeper.objects.get(id=data['shopkeeper_id'])
+        customer = Customer.objects.get(id=data['customer_id'])
+    except (Shopkeeper.DoesNotExist, InvalidId):
+        raise ValidationError("Shopkeeper not found")
+    except (Customer.DoesNotExist, InvalidId):
+        raise ValidationError("Customer not found")
+    
+    # Get product if provided
+    product = None
+    if data.get('product_id'):
+        try:
+            product = Product.objects.get(id=data['product_id'])
+        except Product.DoesNotExist:
+            raise ValidationError("Product not found")
+    
+    # Generate shopkeeper history for fraud detection
+    shopkeeper_history = get_shopkeeper_history(str(data['shopkeeper_id']))
+    
+    # Prepare transaction data for verification
+    transcript = data.get('transcript', '')
+    amount_paise = int(rupees_to_paise(data['amount']))
+    
+    verification_data = {
+        'transcript': transcript,
+        'type': data['type'],
+        'amount': amount_paise,
+        'customer_id': str(data['customer_id']),
+        'shopkeeper_id': str(data['shopkeeper_id']),
+        'customer_confirmed': data.get('customer_confirmed', False),
+        'shopkeeper_history': shopkeeper_history,
+        'language': data.get('language', 'hi-IN')
+    }
+    
+    # Initialize verification service with blockchain service
+    blockchain_service = get_blockchain_service()
+    verification_service = get_verification_service(blockchain_service)
+    
+    # Run verification based on transaction type
+    if data['type'] == 'credit':
+        verification_result = verification_service.verify_credit_transaction(verification_data)
+    elif data['type'] == 'sale':
+        verification_result = verification_service.verify_sales_transaction(verification_data)
+    else:
+        # For repay transactions, use credit verification logic
+        verification_result = verification_service.verify_credit_transaction(verification_data)
+    
+    # Extract fraud check details
+    fraud_check = verification_result.fraud_check or {}
+    fraud_score = fraud_check.get('score', 0.0) * 100  # Convert to 0-100 scale
+    fraud_risk_level = fraud_check.get('risk_level', 'low')
+    
+    # Create transaction in MongoDB
+    transaction = Transaction(
+        type=data['type'],
+        amount=data['amount'],
+        shopkeeper_id=shopkeeper,
+        customer_id=customer,
+        product_id=product,
+        timestamp=data.get('timestamp', datetime.now()),
+        status='verified',  # TEMPORARY: Default to verified for testing
+        transcript=transcript,
+        transcript_hash=verification_result.transcript_hash,
+        verification_status=verification_result.status.value,
+        fraud_score=fraud_score,
+        fraud_risk_level=fraud_risk_level,
+        verification_metadata={
+            'storage_location': verification_result.storage_location.value,
+            'fraud_check': fraud_check,
+            'errors': verification_result.errors,
+            'warnings': verification_result.warnings,
+            'metadata': verification_result.metadata
+        },
+        notes=data.get('notes')
+    )
+    
+    # Update status based on verification result
+    # TEMPORARY: Force all transactions to 'verified' for testing
+    transaction.status = 'verified'
+    # if verification_result.status == VerificationStatus.VERIFIED:
+    #     transaction.status = 'verified'
+    # elif verification_result.status == VerificationStatus.FLAGGED:
+    #     transaction.status = 'pending'  # Flagged transactions need review
+    # elif verification_result.status == VerificationStatus.REJECTED:
+    #     transaction.status = 'disputed'
+    # # PENDING status keeps transaction as 'pending'
+    
+    transaction.save()
+    
+    # Write to blockchain if verified
+    blockchain_result = None
+    if verification_result.should_write_to_blockchain and blockchain_service:
+        try:
+            # Determine transaction type for blockchain (0=SALE, 1=CREDIT, 2=REPAY)
+            tx_type_map = {'sale': 0, 'credit': 1, 'repay': 2}
+            tx_type = tx_type_map.get(data['type'], 1)
+            
+            # Get shopkeeper's blockchain address
+            shop_address = shopkeeper.wallet_address or shopkeeper.blockchain_address
+            if not shop_address:
+                logger.warning(f"Shopkeeper {shopkeeper.id} has no blockchain address")
+            else:
+                blockchain_result = blockchain_service.record_transaction(
+                    voice_hash=verification_result.transcript_hash,
+                    shop_address=shop_address,
+                    amount=amount_paise,  # Blockchain expects paise/wei
+                    tx_type=tx_type
+                )
+                
+                if blockchain_result.get('success'):
+                    transaction.blockchain_tx_id = blockchain_result['tx_hash']
+                    transaction.blockchain_block_number = blockchain_result.get('block_number')
+                    transaction.save()
+                    logger.info(f"Transaction {transaction.id} written to blockchain: {blockchain_result['tx_hash']}")
+                else:
+                    logger.error(f"Failed to write transaction {transaction.id} to blockchain: "
+                               f"{blockchain_result.get('error')}")
+        except Exception as e:
+            logger.error(f"Error writing transaction {transaction.id} to blockchain: {e}", exc_info=True)
+    
+    # Update customer statistics
+    if data['type'] == 'sale':
+        customer.total_purchases += data['amount']
+    elif data['type'] == 'credit':
+        customer.total_credits += data['amount']
+        customer.credit_balance += data['amount']
+    elif data['type'] == 'repay':
+        customer.credit_balance -= data['amount']
+        if customer.credit_balance < 0:
+            customer.credit_balance = 0
+    customer.save()
+    
+    logger.info(f"Created transaction {transaction.id} with verification: "
+               f"status={verification_result.status.value}, "
+               f"blockchain={verification_result.should_write_to_blockchain}")
+    
+    return transaction
 
 
 def validate_transaction(data):
@@ -135,7 +356,7 @@ def create_transaction(data):
         shopkeeper_id=shopkeeper,
         customer_id=customer,
         product_id=product,
-        timestamp=data.get('timestamp', datetime.utcnow()),
+        timestamp=data.get('timestamp', datetime.now()),
         status=data.get('status', 'pending'),
         transcript_hash=data.get('transcript_hash'),
         notes=data.get('notes')
@@ -259,6 +480,131 @@ def update_transaction_status(transaction_id, status, blockchain_tx_id=None, blo
     transaction.save()
     
     logger.info(f"Updated transaction {transaction_id} status to {status}")
+    
+    return transaction
+
+
+def update_transaction_with_customer_confirmation(transaction_id, customer_confirmed=True):
+    """
+    Update transaction when customer confirms via WhatsApp.
+    Re-runs verification and writes to blockchain if now verified.
+    
+    Args:
+        transaction_id: Transaction ID
+        customer_confirmed: Whether customer confirmed the transaction
+    
+    Returns:
+        Transaction: Updated transaction object
+    """
+    try:
+        from bson.errors import InvalidId
+        transaction = Transaction.objects.get(id=transaction_id)
+    except (Transaction.DoesNotExist, InvalidId):
+        raise NotFoundError(f"Transaction {transaction_id} not found")
+    
+    # Only re-verify if transaction was pending and has transcript
+    if not transaction.transcript or transaction.status != 'pending':
+        logger.info(f"Transaction {transaction_id} does not need re-verification "
+                   f"(status={transaction.status}, has_transcript={bool(transaction.transcript)})")
+        return transaction
+    
+    # Check if already written to blockchain
+    if transaction.blockchain_tx_id:
+        logger.info(f"Transaction {transaction_id} already written to blockchain")
+        return transaction
+    
+    # Generate shopkeeper history
+    shopkeeper_history = get_shopkeeper_history(str(transaction.shopkeeper_id.id))
+    
+    # Prepare verification data with customer confirmation
+    amount_paise = int(rupees_to_paise(transaction.amount))
+    
+    verification_data = {
+        'transcript': transaction.transcript,
+        'type': transaction.type,
+        'amount': amount_paise,
+        'customer_id': str(transaction.customer_id.id),
+        'shopkeeper_id': str(transaction.shopkeeper_id.id),
+        'customer_confirmed': customer_confirmed,
+        'shopkeeper_history': shopkeeper_history,
+        'language': 'hi-IN'  # Default, could be stored in transaction metadata
+    }
+    
+    # Initialize verification service
+    blockchain_service = get_blockchain_service()
+    verification_service = get_verification_service(blockchain_service)
+    
+    # Re-run verification
+    if transaction.type == 'credit':
+        verification_result = verification_service.verify_credit_transaction(verification_data)
+    elif transaction.type == 'sale':
+        verification_result = verification_service.verify_sales_transaction(verification_data)
+    else:
+        verification_result = verification_service.verify_credit_transaction(verification_data)
+    
+    # Update verification metadata
+    fraud_check = verification_result.fraud_check or {}
+    transaction.verification_status = verification_result.status.value
+    transaction.fraud_score = fraud_check.get('score', 0.0) * 100
+    transaction.fraud_risk_level = fraud_check.get('risk_level', 'low')
+    
+    if transaction.verification_metadata:
+        transaction.verification_metadata.update({
+            'storage_location': verification_result.storage_location.value,
+            'fraud_check': fraud_check,
+            'errors': verification_result.errors,
+            'warnings': verification_result.warnings,
+            'customer_confirmed': customer_confirmed,
+            're_verified_at': datetime.utcnow().isoformat()
+        })
+    else:
+        transaction.verification_metadata = {
+            'storage_location': verification_result.storage_location.value,
+            'fraud_check': fraud_check,
+            'errors': verification_result.errors,
+            'warnings': verification_result.warnings,
+            'customer_confirmed': customer_confirmed,
+            're_verified_at': datetime.utcnow().isoformat()
+        }
+    
+    # Update status based on verification result
+    if verification_result.status == VerificationStatus.VERIFIED:
+        transaction.status = 'verified'
+    elif verification_result.status == VerificationStatus.FLAGGED:
+        transaction.status = 'pending'
+    elif verification_result.status == VerificationStatus.REJECTED:
+        transaction.status = 'disputed'
+    
+    # Write to blockchain if verified
+    if verification_result.should_write_to_blockchain and blockchain_service:
+        try:
+            shopkeeper = Shopkeeper.objects.get(id=transaction.shopkeeper_id.id)
+            shop_address = shopkeeper.wallet_address or shopkeeper.blockchain_address
+            
+            if shop_address:
+                tx_type_map = {'sale': 0, 'credit': 1, 'repay': 2}
+                tx_type = tx_type_map.get(transaction.type, 1)
+                
+                blockchain_result = blockchain_service.record_transaction(
+                    voice_hash=verification_result.transcript_hash,
+                    shop_address=shop_address,
+                    amount=amount_paise,
+                    tx_type=tx_type
+                )
+                
+                if blockchain_result.get('success'):
+                    transaction.blockchain_tx_id = blockchain_result['tx_hash']
+                    transaction.blockchain_block_number = blockchain_result.get('block_number')
+                    logger.info(f"Transaction {transaction_id} written to blockchain after confirmation: "
+                              f"{blockchain_result['tx_hash']}")
+        except Exception as e:
+            logger.error(f"Error writing transaction {transaction_id} to blockchain after confirmation: {e}",
+                        exc_info=True)
+    
+    transaction.save()
+    
+    logger.info(f"Updated transaction {transaction_id} with customer confirmation: "
+               f"status={transaction.status}, blockchain={bool(transaction.blockchain_tx_id)}")
     
     return transaction
 

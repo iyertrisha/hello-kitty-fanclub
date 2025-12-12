@@ -6,7 +6,9 @@ from .shopkeeper_service import (
     update_shopkeeper,
     calculate_credit_score,
     get_inventory,
-    register_shopkeeper
+    register_shopkeeper,
+    delete_shopkeeper,
+    toggle_shopkeeper_status
 )
 
 __all__ = [
@@ -14,6 +16,8 @@ __all__ = [
     'update_shopkeeper',
     'calculate_credit_score',
     'get_inventory',
-    'register_shopkeeper'
+    'register_shopkeeper',
+    'delete_shopkeeper',
+    'toggle_shopkeeper_status'
 ]
 

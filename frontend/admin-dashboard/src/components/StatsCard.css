@@ -1,31 +1,70 @@
 .stats-card {
-  background: #ffffff;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
 }
 
 .stats-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Platform variant */
+.stats-card.platform {
+  border-color: rgba(59, 130, 246, 0.1);
+}
+
+.stats-card.platform:hover {
+  border-color: rgba(59, 130, 246, 0.25);
+  box-shadow: 0 12px 24px rgba(59, 130, 246, 0.1);
+}
+
+.stats-card.platform .stats-card-icon {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+/* Aggregator variant */
+.stats-card.aggregator {
+  border-color: rgba(16, 185, 129, 0.1);
+}
+
+.stats-card.aggregator:hover {
+  border-color: rgba(16, 185, 129, 0.25);
+  box-shadow: 0 12px 24px rgba(16, 185, 129, 0.1);
+}
+
+.stats-card.aggregator .stats-card-icon {
+  background: rgba(16, 185, 129, 0.1);
 }
 
 .stats-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .stats-card-icon {
-  font-size: 32px;
+  font-size: 28px;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
 }
 
 .stats-card-trend {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
 }
 
 .stats-card-content {
@@ -36,13 +75,14 @@
 .stats-card-value {
   font-size: 32px;
   font-weight: 700;
-  color: #333;
-  margin-bottom: 8px;
+  color: #ffffff;
+  margin-bottom: 6px;
+  font-family: 'JetBrains Mono', 'SF Mono', monospace;
+  letter-spacing: -1px;
 }
 
 .stats-card-title {
   font-size: 14px;
-  color: #666;
+  color: rgba(255, 255, 255, 0.5);
   font-weight: 500;
 }
-
