@@ -11,6 +11,21 @@ class Config:
     FLASK_ENV = os.getenv('FLASK_ENV', 'development')
     FLASK_DEBUG = os.getenv('FLASK_DEBUG', 'True') == 'True'
     FLASK_PORT = int(os.getenv('FLASK_PORT', '5000'))
+    
+    # Twilio WhatsApp configuration
+    TWILIO_ACCOUNT_SID = os.getenv('TWILIO_ACCOUNT_SID', '')
+    TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN', '')
+    TWILIO_WHATSAPP_NUMBER = os.getenv('TWILIO_WHATSAPP_NUMBER', 'whatsapp:+14155238886')
+    
+    # Dialogflow configuration
+    DIALOGFLOW_PROJECT_ID = os.getenv('DIALOGFLOW_PROJECT_ID', '')
+    DIALOGFLOW_CREDENTIALS_PATH = os.getenv('DIALOGFLOW_CREDENTIALS_PATH', '')
+    
+    # Vineet API configuration
+    VINEET_API_BASE_URL = os.getenv('VINEET_API_BASE_URL', 'http://localhost:5000/api')
+    
+    # WhatsApp internal API key
+    WHATSAPP_INTERNAL_API_KEY = os.getenv('WHATSAPP_INTERNAL_API_KEY', '')
 
     @staticmethod
     def init_app(app):

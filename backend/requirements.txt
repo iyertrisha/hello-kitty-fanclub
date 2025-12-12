@@ -40,3 +40,9 @@ colorlog>=6.7.0
 
 # DNS resolver for MongoDB SRV records
 dnspython>=2.4.0
+
+# Twilio WhatsApp integration
+twilio>=8.0.0
+
+# Google Dialogflow integration
+google-cloud-dialogflow>=2.0.0
