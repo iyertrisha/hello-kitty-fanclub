@@ -194,3 +194,26 @@ class PendingConfirmation(Document):
             ('phone', 'expires_at')
         ]
     }
+
+
+class Notice(Document):
+    """Noticeboard announcements"""
+    title = StringField(required=True, max_length=200)
+    message = StringField(required=True, max_length=1000)
+    shopkeeper_id = ReferenceField('Shopkeeper', required=True)
+    created_at = DateTimeField(default=datetime.utcnow)
+    priority = StringField(default='normal', choices=('low', 'normal', 'high', 'urgent'))
+    is_active = BooleanField(default=True)
+    expires_at = DateTimeField()  # Optional expiration
+    
+    meta = {
+        'collection': 'notices',
+        'indexes': [
+            'shopkeeper_id',
+            'created_at',
+            'is_active',
+            'priority',
+            ('shopkeeper_id', 'is_active'),
+            ('shopkeeper_id', 'priority')
+        ]
+    }
