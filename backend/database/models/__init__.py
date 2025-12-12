@@ -21,6 +21,8 @@ Cooperative = _models_module.Cooperative
 Product = _models_module.Product
 Location = _models_module.Location
 BulkOrder = _models_module.BulkOrder
+PendingConfirmation = _models_module.PendingConfirmation
+Notice = _models_module.Notice
 Supplier = _models_module.Supplier
 SupplierOrder = _models_module.SupplierOrder
 OTPVerification = _models_module.OTPVerification
@@ -33,6 +35,8 @@ __all__ = [
     'Product',
     'Location',
     'BulkOrder',
+    'PendingConfirmation',
+    'Notice'
     'Supplier',
     'SupplierOrder',
     'OTPVerification'

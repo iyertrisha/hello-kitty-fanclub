@@ -178,6 +178,50 @@ class BulkOrder(Document):
     }
 
 
+class PendingConfirmation(Document):
+    """Pending confirmation model for WhatsApp credit confirmations"""
+    STATUS_CHOICES = ('pending', 'confirmed', 'rejected', 'expired')
+    
+    transaction_id = ReferenceField('Transaction', required=True)
+    phone = StringField(required=True, max_length=20)  # Normalized phone (e.g., +919876543210)
+    amount = FloatField(required=True, min_value=0)
+    shopkeeper = StringField(required=True, max_length=200)  # Shopkeeper name
+    status = StringField(default='pending', choices=STATUS_CHOICES)
+    created_at = DateTimeField(default=datetime.utcnow, required=True)
+    expires_at = DateTimeField(required=True)
+    
+    meta = {
+        'collection': 'pending_confirmations',
+        'indexes': [
+            'phone',
+            'status',
+            'expires_at',
+            'transaction_id',
+            ('phone', 'status'),
+            ('phone', 'expires_at')
+        ]
+    }
+
+
+class Notice(Document):
+    """Noticeboard announcements"""
+    title = StringField(required=True, max_length=200)
+    message = StringField(required=True, max_length=1000)
+    shopkeeper_id = ReferenceField('Shopkeeper', required=True)
+    created_at = DateTimeField(default=datetime.utcnow)
+    priority = StringField(default='normal', choices=('low', 'normal', 'high', 'urgent'))
+    is_active = BooleanField(default=True)
+    expires_at = DateTimeField()  # Optional expiration
+    
+    meta = {
+        'collection': 'notices',
+        'indexes': [
+            'shopkeeper_id',
+            'created_at',
+            'is_active',
+            'priority',
+            ('shopkeeper_id', 'is_active'),
+            ('shopkeeper_id', 'priority')
 class Supplier(Document):
     """Supplier/Vendor model"""
     name = StringField(required=True, max_length=200)

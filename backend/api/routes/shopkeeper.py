@@ -21,6 +21,37 @@ logger = logging.getLogger(__name__)
 shopkeeper_bp = Blueprint('shopkeeper', __name__)
 
 
+@shopkeeper_bp.route('', methods=['GET'])
+def list_shopkeepers_route():
+    """
+    Get list of shopkeepers (for WhatsApp bot)
+    
+    Returns: {
+        "shopkeepers": [...]
+    }
+    """
+    try:
+        from database.models import Shopkeeper
+        
+        shopkeepers = Shopkeeper.objects()
+        
+        result = []
+        for shopkeeper in shopkeepers:
+            result.append({
+                'id': str(shopkeeper.id),
+                'name': shopkeeper.name,
+                'phone': shopkeeper.phone,
+                'address': shopkeeper.address
+            })
+        
+        return jsonify({
+            'shopkeepers': result
+        }), 200
+    except Exception as e:
+        logger.error(f"Error listing shopkeepers: {e}", exc_info=True)
+        raise ValidationError(f"Failed to list shopkeepers: {str(e)}")
+
+
 @shopkeeper_bp.route('/register', methods=['POST'])
 @validate_request(required_fields=['name', 'address', 'phone', 'wallet_address'])
 def register_shopkeeper_route():
