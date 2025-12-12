@@ -8,6 +8,16 @@ pymongo>=4.5.0
 
 # Data processing
 pandas>=2.0.0
+numpy>=1.24.0
+
+# ML dependencies
+scikit-learn>=1.3.0
+joblib>=1.3.0
+matplotlib>=3.7.0
+
+# FastAPI dependencies
+fastapi>=0.104.0
+uvicorn>=0.24.0
 
 # Environment variables
 python-dotenv>=1.0.0
@@ -30,4 +40,3 @@ colorlog>=6.7.0
 
 # DNS resolver for MongoDB SRV records
 dnspython>=2.4.0
-
