@@ -16,7 +16,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import apiService from '../../services/api';
+import apiService from '../services/api';
 import './Analytics.css';
 
 const COLORS = ['#3b82f6', '#34d399', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
