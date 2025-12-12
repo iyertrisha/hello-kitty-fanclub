@@ -1,61 +1,32 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import Overview from './pages/Overview';
-import StoreManagement from './pages/StoreManagement';
-import Cooperatives from './pages/Cooperatives';
-import Analytics from './pages/Analytics';
-import BlockchainLogs from './pages/BlockchainLogs';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+
+// Cooperative Dashboard
+import CooperativeLayout from './layouts/AggregatorLayout';
+import CooperativeOverview from './pages/aggregator/CooperativeOverview';
+import GeographicMap from './pages/aggregator/GeographicMap';
+import CooperativeOrders from './pages/aggregator/CooperativeOrders';
+import CooperativeBlockchainLogs from './pages/aggregator/BlockchainLogs';
+
 import './App.css';
 
 function App() {
   return (
     <Router>
-      <div className="app">
-        <nav className="sidebar">
-          <div className="sidebar-header">
-            <h2 className="sidebar-title">Admin Dashboard</h2>
-          </div>
-          <ul className="sidebar-menu">
-            <li>
-              <Link to="/" className="sidebar-link">
-                📊 Overview
-              </Link>
-            </li>
-            <li>
-              <Link to="/stores" className="sidebar-link">
-                🏪 Stores
-              </Link>
-            </li>
-            <li>
-              <Link to="/cooperatives" className="sidebar-link">
-                👥 Cooperatives
-              </Link>
-            </li>
-            <li>
-              <Link to="/analytics" className="sidebar-link">
-                📈 Analytics
-              </Link>
-            </li>
-            <li>
-              <Link to="/blockchain" className="sidebar-link">
-                ⛓️ Blockchain Logs
-              </Link>
-            </li>
-          </ul>
-        </nav>
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<Overview />} />
-            <Route path="/stores" element={<StoreManagement />} />
-            <Route path="/cooperatives" element={<Cooperatives />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/blockchain" element={<BlockchainLogs />} />
-          </Routes>
-        </main>
-      </div>
+      <Routes>
+        {/* Cooperative Dashboard Routes */}
+        <Route path="/" element={<CooperativeLayout />}>
+          <Route index element={<CooperativeOverview />} />
+          <Route path="map" element={<GeographicMap />} />
+          <Route path="orders" element={<CooperativeOrders />} />
+          <Route path="blockchain" element={<CooperativeBlockchainLogs />} />
+        </Route>
+
+        {/* Fallback redirect */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </Router>
   );
 }
 
 export default App;
-
