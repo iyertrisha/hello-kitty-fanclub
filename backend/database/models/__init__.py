@@ -21,6 +21,7 @@ Cooperative = _models_module.Cooperative
 Product = _models_module.Product
 Location = _models_module.Location
 BulkOrder = _models_module.BulkOrder
+PendingConfirmation = _models_module.PendingConfirmation
 
 __all__ = [
     'Shopkeeper',
@@ -29,6 +30,7 @@ __all__ = [
     'Cooperative',
     'Product',
     'Location',
-    'BulkOrder'
+    'BulkOrder',
+    'PendingConfirmation'
 ]
 

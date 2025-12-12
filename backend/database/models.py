@@ -170,3 +170,27 @@ class BulkOrder(Document):
         ]
     }
 
+
+class PendingConfirmation(Document):
+    """Pending confirmation model for WhatsApp credit confirmations"""
+    STATUS_CHOICES = ('pending', 'confirmed', 'rejected', 'expired')
+    
+    transaction_id = ReferenceField('Transaction', required=True)
+    phone = StringField(required=True, max_length=20)  # Normalized phone (e.g., +919876543210)
+    amount = FloatField(required=True, min_value=0)
+    shopkeeper = StringField(required=True, max_length=200)  # Shopkeeper name
+    status = StringField(default='pending', choices=STATUS_CHOICES)
+    created_at = DateTimeField(default=datetime.utcnow, required=True)
+    expires_at = DateTimeField(required=True)
+    
+    meta = {
+        'collection': 'pending_confirmations',
+        'indexes': [
+            'phone',
+            'status',
+            'expires_at',
+            'transaction_id',
+            ('phone', 'status'),
+            ('phone', 'expires_at')
+        ]
+    }
