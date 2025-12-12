@@ -1,8 +1,12 @@
+/* Global Reset */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
+
+/* Custom Font Import */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -10,67 +14,63 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #f5f5f5;
+  background: #0a0f1c;
+  color: #ffffff;
 }
 
-.app {
-  display: flex;
-  min-height: 100vh;
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-.sidebar {
-  width: 250px;
-  background: #ffffff;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
-  position: fixed;
-  height: 100vh;
-  overflow-y: auto;
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
 }
 
-.sidebar-header {
-  padding: 24px;
-  border-bottom: 1px solid #e0e0e0;
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
 }
 
-.sidebar-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #333;
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
-.sidebar-menu {
-  list-style: none;
-  padding: 16px 0;
+/* Selection */
+::selection {
+  background: rgba(59, 130, 246, 0.3);
+  color: #ffffff;
 }
 
-.sidebar-menu li {
-  margin-bottom: 4px;
+/* Focus States */
+*:focus {
+  outline: none;
 }
 
-.sidebar-link {
-  display: block;
-  padding: 12px 24px;
-  color: #666;
+*:focus-visible {
+  outline: 2px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 2px;
+}
+
+/* Link Reset */
+a {
+  color: inherit;
   text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
 }
 
-.sidebar-link:hover {
-  background: #f5f5f5;
-  color: #007aff;
+/* Button Reset */
+button {
+  font-family: inherit;
+  cursor: pointer;
 }
 
-.sidebar-link.active {
-  background: #e3f2fd;
-  color: #007aff;
-  border-right: 3px solid #007aff;
+/* Input Reset */
+input, select, textarea {
+  font-family: inherit;
 }
 
-.main-content {
-  flex: 1;
-  margin-left: 250px;
-  min-height: 100vh;
+/* Monospace Text */
+.mono, code {
+  font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 }
-

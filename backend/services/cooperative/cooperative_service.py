@@ -30,18 +30,29 @@ def get_cooperatives():
     Returns:
         list: List of cooperative dictionaries
     """
-    cooperatives = Cooperative.objects(is_active=True)
+    # Get all cooperatives (exclude only those explicitly set to False)
+    # This includes: is_active=True, is_active=None, and is_active not set
+    # Simple approach: get all and filter out False
+    all_coops = Cooperative.objects()
+    cooperatives = [c for c in all_coops if getattr(c, 'is_active', True) != False]
+    
+    logger.info(f"Found {len(cooperatives)} cooperatives (out of {all_coops.count()} total)")
     
     result = []
     for coop in cooperatives:
         # Include members data for frontend
         members = []
-        for member in coop.members:
-            members.append({
-                'id': str(member.id),
-                'name': member.name,
-                'address': member.address,
-            })
+        if coop.members:
+            for member in coop.members:
+                try:
+                    members.append({
+                        'id': str(member.id),
+                        'name': member.name,
+                        'address': member.address or '',
+                    })
+                except Exception as e:
+                    logger.warning(f"Error processing member {member}: {e}")
+                    continue
         
         result.append({
             'id': str(coop.id),
@@ -79,12 +90,16 @@ def create_cooperative(data):
     if not 0 <= data['revenue_split_percent'] <= 100:
         raise ValidationError("Revenue split percent must be between 0 and 100")
     
-    # Create cooperative in database
+    # Create cooperative in database - explicitly set is_active=True
     cooperative = Cooperative(
         name=data['name'],
         description=data.get('description'),
-        revenue_split_percent=data['revenue_split_percent']
+        revenue_split_percent=data['revenue_split_percent'],
+        is_active=True
     )
+    
+    # Save first to generate ID (needed for blockchain)
+    cooperative.save()
     
     # Create on blockchain if service available
     if BlockchainService and BlockchainConfig.CONTRACT_ADDRESS:
@@ -107,12 +122,11 @@ def create_cooperative(data):
             )
             
             cooperative.blockchain_coop_id = coop_id
+            cooperative.save()  # Save again with blockchain ID
             logger.info(f"Created cooperative {coop_id} on blockchain: {tx_hash}")
         except Exception as e:
             logger.error(f"Error creating cooperative on blockchain: {e}")
             # Continue without blockchain registration
-    
-    cooperative.save()
     
     logger.info(f"Created cooperative {cooperative.id}")
     
@@ -283,4 +297,58 @@ def calculate_revenue_split(coop_id, total_revenue):
         'member_count': member_count,
         'splits': splits
     }
+
+
+def delete_cooperative(coop_id):
+    """
+    Delete a cooperative
+    
+    Args:
+        coop_id: Cooperative ID
+    
+    Returns:
+        bool: True if deleted successfully
+    """
+    try:
+        from bson.errors import InvalidId
+        cooperative = Cooperative.objects.get(id=coop_id)
+    except (Cooperative.DoesNotExist, InvalidId):
+        raise NotFoundError(f"Cooperative {coop_id} not found")
+    
+    # Hard delete - remove from database
+    cooperative.delete()
+    
+    logger.info(f"Deleted cooperative {coop_id}")
+    
+    return True
+
+
+def update_cooperative(coop_id, data):
+    """
+    Update cooperative details
+    
+    Args:
+        coop_id: Cooperative ID
+        data: Dictionary of fields to update
+    
+    Returns:
+        Cooperative: Updated cooperative object
+    """
+    try:
+        from bson.errors import InvalidId
+        cooperative = Cooperative.objects.get(id=coop_id)
+    except (Cooperative.DoesNotExist, InvalidId):
+        raise NotFoundError(f"Cooperative {coop_id} not found")
+    
+    # Update allowed fields
+    allowed_fields = ['name', 'description', 'revenue_split_percent', 'is_active']
+    for field in allowed_fields:
+        if field in data:
+            setattr(cooperative, field, data[field])
+    
+    cooperative.save()
+    
+    logger.info(f"Updated cooperative {coop_id}")
+    
+    return cooperative
 

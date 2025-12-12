@@ -204,16 +204,26 @@ def seed_cooperatives(shopkeepers, count=3):
         # Assign 2-3 members per cooperative
         members = random.sample(shopkeepers, min(3, len(shopkeepers)))
         
-        cooperative = Cooperative(
-            name=coop_data['name'],
-            description=f"Cooperative for {coop_data['name']}",
-            revenue_split_percent=coop_data['split'],
-            members=members,
-            created_at=datetime.utcnow() - timedelta(days=random.randint(30, 180))
-        )
-        cooperative.save()
-        cooperatives.append(cooperative)
-        logger.info(f"Created cooperative: {cooperative.name} with {len(members)} members")
+        # Check if cooperative already exists
+        existing_coop = Cooperative.objects(name=coop_data['name']).first()
+        if existing_coop:
+            logger.info(f"Cooperative {coop_data['name']} already exists, updating is_active")
+            existing_coop.is_active = True
+            existing_coop.members = members
+            existing_coop.save()
+            cooperatives.append(existing_coop)
+        else:
+            cooperative = Cooperative(
+                name=coop_data['name'],
+                description=f"Cooperative for {coop_data['name']}",
+                revenue_split_percent=coop_data['split'],
+                members=members,
+                is_active=True,  # Explicitly set to True
+                created_at=datetime.utcnow() - timedelta(days=random.randint(30, 180))
+            )
+            cooperative.save()
+            cooperatives.append(cooperative)
+            logger.info(f"Created cooperative: {cooperative.name} with {len(members)} members")
     
     return cooperatives
 

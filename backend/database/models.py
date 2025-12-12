@@ -44,6 +44,9 @@ class Shopkeeper(Document):
     registered_at = DateTimeField(default=datetime.utcnow)
     is_active = BooleanField(default=True)
     location = EmbeddedDocumentField(Location)
+    flagged = BooleanField(default=False)  # Flagged by platform admin for review
+    flag_reason = StringField(max_length=500)  # Reason for flagging
+    flagged_at = DateTimeField()  # When it was flagged
     
     meta = {
         'collection': 'shopkeepers',
@@ -108,10 +111,14 @@ class Transaction(Document):
     product_id = ReferenceField('Product')  # Optional, for sales transactions
     timestamp = DateTimeField(default=datetime.utcnow, required=True)
     status = StringField(default='pending', choices=STATUS_CHOICES)
+    transcript = StringField()  # Original transcript text from STT
     transcript_hash = StringField(max_length=66)  # SHA256 hash (0x + 64 hex chars)
     blockchain_tx_id = StringField(max_length=66)  # Blockchain transaction hash
     blockchain_block_number = IntField()
-    verification_status = StringField(max_length=50)  # Additional verification info
+    verification_status = StringField(max_length=50)  # Additional verification info (verified, pending, flagged, rejected)
+    fraud_score = FloatField()  # Fraud detection score (0-100)
+    fraud_risk_level = StringField(max_length=20)  # low, medium, high, critical
+    verification_metadata = DictField()  # Full verification metadata from verification service
     notes = StringField(max_length=500)
     
     meta = {
@@ -215,5 +222,63 @@ class Notice(Document):
             'priority',
             ('shopkeeper_id', 'is_active'),
             ('shopkeeper_id', 'priority')
+class Supplier(Document):
+    """Supplier/Vendor model"""
+    name = StringField(required=True, max_length=200)
+    email = StringField(required=True, unique=True, max_length=200)
+    phone = StringField(max_length=20)  # Optional, can be set later
+    password_hash = StringField(default='')  # Not required for OTP auth
+    company_name = StringField(max_length=200)
+    address = StringField()
+    service_area_center = EmbeddedDocumentField(Location)  # Center of service area
+    service_area_radius_km = FloatField(default=10.0, min_value=1.0)  # Radius in km
+    registered_at = DateTimeField(default=datetime.utcnow)
+    is_active = BooleanField(default=True)
+    
+    meta = {
+        'collection': 'suppliers',
+        'indexes': [
+            'email',
+            'phone',
+            'registered_at'
+        ]
+    }
+
+
+class SupplierOrder(Document):
+    """Bulk order from supplier to shopkeeper"""
+    supplier_id = ReferenceField('Supplier', required=True)
+    shopkeeper_id = ReferenceField('Shopkeeper', required=True)
+    products = ListField(DictField())  # [{product_name, quantity, unit_price}, ...]
+    total_amount = FloatField(required=True, min_value=0)
+    status = StringField(default='pending', choices=('pending', 'confirmed', 'dispatched', 'delivered', 'cancelled'))
+    created_at = DateTimeField(default=datetime.utcnow)
+    notes = StringField(max_length=500)
+    
+    meta = {
+        'collection': 'supplier_orders',
+        'indexes': [
+            'supplier_id',
+            'shopkeeper_id',
+            'created_at',
+            'status'
+        ]
+    }
+
+
+class OTPVerification(Document):
+    """OTP verification model for email-based authentication"""
+    email = StringField(required=True, max_length=200)
+    otp_code = StringField(required=True, max_length=6)
+    expires_at = DateTimeField(required=True)
+    used = BooleanField(default=False)
+    created_at = DateTimeField(default=datetime.utcnow)
+    
+    meta = {
+        'collection': 'otp_verifications',
+        'indexes': [
+            'email',
+            'expires_at',
+            ('email', 'expires_at')
         ]
     }

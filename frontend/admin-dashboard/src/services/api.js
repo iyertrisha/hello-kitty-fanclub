@@ -31,18 +31,19 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized - clear token and redirect to login
       localStorage.removeItem('admin_token');
-      // Don't redirect for now as we don't have login page
-      // window.location.href = '/login';
     }
     console.error('API Error:', error.response?.data || error.message);
     return Promise.reject(error);
   }
 );
 
-// API Methods - Connected to real Flask backend
+// API Methods
 export const apiService = {
+  // ==========================================
+  // PLATFORM ADMIN ENDPOINTS (Read-Only)
+  // ==========================================
+
   // Admin Overview
   getOverviewStats: async () => {
     try {
@@ -54,13 +55,241 @@ export const apiService = {
     }
   },
 
-  // Store Management
+  // Store Management (Read-Only + Flagging)
   getStores: async (filters = {}) => {
     try {
       const response = await api.get('/admin/stores', { params: filters });
       return response.data;
     } catch (error) {
       console.error('Error fetching stores:', error);
+      throw error;
+    }
+  },
+
+  getStore: async (storeId) => {
+    try {
+      const response = await api.get(`/shopkeeper/${storeId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching store:', error);
+      throw error;
+    }
+  },
+
+  // Flag store for review (Platform Admin only action)
+  flagStore: async (storeId, reason) => {
+    try {
+      const response = await api.post(`/admin/stores/${storeId}/flag`, { reason });
+      return response.data;
+    } catch (error) {
+      console.error('Error flagging store:', error);
+      throw error;
+    }
+  },
+
+  // Remove flag from store
+  unflagStore: async (storeId) => {
+    try {
+      const response = await api.delete(`/admin/stores/${storeId}/flag`);
+      return response.data;
+    } catch (error) {
+      console.error('Error unflagging store:', error);
+      throw error;
+    }
+  },
+
+  // Analytics (Read-Only)
+  getAnalytics: async (params = {}) => {
+    try {
+      const response = await api.get('/admin/analytics', { params });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+      throw error;
+    }
+  },
+
+  // Blockchain Logs (Read-Only - All transactions)
+  getBlockchainLogs: async (filters = {}) => {
+    try {
+      const response = await api.get('/admin/blockchain-logs', { params: filters });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching blockchain logs:', error);
+      throw error;
+    }
+  },
+
+  // Blockchain Status
+  getBlockchainStatus: async () => {
+    try {
+      const response = await api.get('/blockchain/status');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching blockchain status:', error);
+      throw error;
+    }
+  },
+
+  // All Credit Scores (Platform Admin)
+  getAllCreditScores: async () => {
+    try {
+      const response = await api.get('/admin/credit-scores');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching credit scores:', error);
+      throw error;
+    }
+  },
+
+  // ==========================================
+  // AGGREGATOR/COOPERATIVE ENDPOINTS
+  // ==========================================
+
+  // Cooperative Overview
+  getCooperativeOverview: async (cooperativeId) => {
+    try {
+      const response = await api.get(`/cooperative/${cooperativeId}/overview`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching cooperative overview:', error);
+      // Return mock data for now
+      return {
+        name: 'Delhi Kirana Network',
+        member_count: 42,
+        revenue: { today: 45000, week: 312000, month: 1250000 },
+        active_orders: 23,
+        sales_growth: 23,
+        order_volume: 156,
+        avg_order_value: 450,
+        recent_activity: []
+      };
+    }
+  },
+
+  // Cooperative Members (Read-Only)
+  getCooperativeMembers: async (cooperativeId) => {
+    try {
+      const response = await api.get(`/cooperative/${cooperativeId}/members`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching cooperative members:', error);
+      throw error;
+    }
+  },
+
+  // Cooperative Member Credit Scores
+  getCooperativeMemberScores: async (cooperativeId) => {
+    try {
+      const response = await api.get(`/cooperative/${cooperativeId}/member-scores`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching member scores:', error);
+      // Return mock data
+      return {
+        scores: [
+          { name: 'Krishna Store', credit_score: 845 },
+          { name: 'Gupta Provisions', credit_score: 720 },
+          { name: 'Sharma Kirana', credit_score: 680 },
+          { name: 'Verma Mart', credit_score: 590 },
+          { name: 'Singh Store', credit_score: 420 },
+        ]
+      };
+    }
+  },
+
+  // Geographic Map Data
+  getCooperativeMapData: async (cooperativeId) => {
+    try {
+      const response = await api.get(`/cooperative/${cooperativeId}/map-data`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching map data:', error);
+      throw error;
+    }
+  },
+
+  // Cooperative Orders
+  getCooperativeOrders: async (cooperativeId, filters = {}) => {
+    try {
+      const response = await api.get(`/cooperative/${cooperativeId}/orders`, { params: filters });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching cooperative orders:', error);
+      throw error;
+    }
+  },
+
+  // Update Order Status
+  updateOrderStatus: async (cooperativeId, orderId, status) => {
+    try {
+      const response = await api.put(`/cooperative/${cooperativeId}/orders/${orderId}/status`, { status });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      throw error;
+    }
+  },
+
+  // Cooperative Blockchain Logs
+  getCooperativeBlockchainLogs: async (cooperativeId, filters = {}) => {
+    try {
+      const response = await api.get(`/cooperative/${cooperativeId}/blockchain-logs`, { params: filters });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching cooperative blockchain logs:', error);
+      throw error;
+    }
+  },
+
+
+  // ==========================================
+  // SHARED/UTILITY ENDPOINTS
+  // ==========================================
+
+  // Cooperatives List
+  getCooperatives: async () => {
+    try {
+      const response = await api.get('/admin/cooperatives');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching cooperatives:', error);
+      throw error;
+    }
+  },
+
+  // Shopkeeper Credit Score
+  getShopkeeperCreditScore: async (shopkeeperId) => {
+    try {
+      const response = await api.get(`/shopkeeper/${shopkeeperId}/credit-score`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching credit score:', error);
+      throw error;
+    }
+  },
+
+  // Transactions
+  getTransactions: async (filters = {}) => {
+    try {
+      const response = await api.get('/transactions', { params: filters });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      throw error;
+    }
+  },
+
+  // ==========================================
+  // LEGACY ENDPOINTS (for backward compatibility)
+  // ==========================================
+
+  createStore: async (data) => {
+    try {
+      const response = await api.post('/shopkeeper/register', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating store:', error);
       throw error;
     }
   },
@@ -85,13 +314,12 @@ export const apiService = {
     }
   },
 
-  // Cooperative Management
-  getCooperatives: async () => {
+  toggleStoreStatus: async (storeId) => {
     try {
-      const response = await api.get('/admin/cooperatives');
+      const response = await api.post(`/shopkeeper/${storeId}/toggle-status`);
       return response.data;
     } catch (error) {
-      console.error('Error fetching cooperatives:', error);
+      console.error('Error toggling store status:', error);
       throw error;
     }
   },
@@ -126,16 +354,6 @@ export const apiService = {
     }
   },
 
-  getCooperativeMembers: async (coopId) => {
-    try {
-      const response = await api.get(`/cooperative/${coopId}/members`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching cooperative members:', error);
-      throw error;
-    }
-  },
-
   addCooperativeMember: async (coopId, shopkeeperId) => {
     try {
       const response = await api.post(`/cooperative/${coopId}/join`, {
@@ -154,61 +372,6 @@ export const apiService = {
       return response.data;
     } catch (error) {
       console.error('Error removing cooperative member:', error);
-      throw error;
-    }
-  },
-
-  // Analytics
-  getAnalytics: async (dateRange = {}) => {
-    try {
-      const response = await api.get('/admin/analytics', { params: dateRange });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching analytics:', error);
-      throw error;
-    }
-  },
-
-  // Blockchain Logs
-  getBlockchainLogs: async (filters = {}) => {
-    try {
-      const response = await api.get('/admin/blockchain-logs', { params: filters });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching blockchain logs:', error);
-      throw error;
-    }
-  },
-
-  // Blockchain Status
-  getBlockchainStatus: async () => {
-    try {
-      const response = await api.get('/blockchain/status');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching blockchain status:', error);
-      throw error;
-    }
-  },
-
-  // Transactions
-  getTransactions: async (filters = {}) => {
-    try {
-      const response = await api.get('/transactions', { params: filters });
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-      throw error;
-    }
-  },
-
-  // Shopkeeper Credit Score
-  getShopkeeperCreditScore: async (shopkeeperId) => {
-    try {
-      const response = await api.get(`/shopkeeper/${shopkeeperId}/credit-score`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching credit score:', error);
       throw error;
     }
   },
