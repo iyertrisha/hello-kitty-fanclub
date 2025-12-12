@@ -3,6 +3,7 @@ Flask API application package
 """
 from flask import Flask, request
 from flask_cors import CORS
+from flask_session import Session
 from mongoengine import connect, disconnect
 import logging
 from config import config
@@ -30,6 +31,9 @@ def create_app(config_name='default'):
     # Load configuration
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
+    
+    # Configure Flask sessions
+    Session(app)
     
     # Initialize CORS
     CORS(app, origins=app.config['CORS_ORIGINS'], supports_credentials=True)

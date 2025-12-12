@@ -11,6 +11,18 @@ class Config:
     FLASK_ENV = os.getenv('FLASK_ENV', 'development')
     FLASK_DEBUG = os.getenv('FLASK_DEBUG', 'True') == 'True'
     FLASK_PORT = int(os.getenv('FLASK_PORT', '5000'))
+    
+    # SendGrid Configuration
+    SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY', '')
+    SENDGRID_FROM_EMAIL = os.getenv('SENDGRID_FROM_EMAIL', 'noreply@kirana.com')
+    
+    # Session Configuration
+    SESSION_TYPE = 'filesystem'  # Using filesystem for simplicity, can switch to mongodb
+    SESSION_PERMANENT = True
+    PERMANENT_SESSION_LIFETIME = 604800  # 7 days in seconds
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SECURE = os.getenv('FLASK_ENV') == 'production'
+    SESSION_COOKIE_SAMESITE = 'Lax'
 
     @staticmethod
     def init_app(app):

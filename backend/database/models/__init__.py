@@ -21,6 +21,9 @@ Cooperative = _models_module.Cooperative
 Product = _models_module.Product
 Location = _models_module.Location
 BulkOrder = _models_module.BulkOrder
+Supplier = _models_module.Supplier
+SupplierOrder = _models_module.SupplierOrder
+OTPVerification = _models_module.OTPVerification
 
 __all__ = [
     'Shopkeeper',
@@ -29,6 +32,9 @@ __all__ = [
     'Cooperative',
     'Product',
     'Location',
-    'BulkOrder'
+    'BulkOrder',
+    'Supplier',
+    'SupplierOrder',
+    'OTPVerification'
 ]
 
