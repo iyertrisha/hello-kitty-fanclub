@@ -108,10 +108,14 @@ class Transaction(Document):
     product_id = ReferenceField('Product')  # Optional, for sales transactions
     timestamp = DateTimeField(default=datetime.utcnow, required=True)
     status = StringField(default='pending', choices=STATUS_CHOICES)
+    transcript = StringField()  # Original transcript text from STT
     transcript_hash = StringField(max_length=66)  # SHA256 hash (0x + 64 hex chars)
     blockchain_tx_id = StringField(max_length=66)  # Blockchain transaction hash
     blockchain_block_number = IntField()
-    verification_status = StringField(max_length=50)  # Additional verification info
+    verification_status = StringField(max_length=50)  # Additional verification info (verified, pending, flagged, rejected)
+    fraud_score = FloatField()  # Fraud detection score (0-100)
+    fraud_risk_level = StringField(max_length=20)  # low, medium, high, critical
+    verification_metadata = DictField()  # Full verification metadata from verification service
     notes = StringField(max_length=500)
     
     meta = {
