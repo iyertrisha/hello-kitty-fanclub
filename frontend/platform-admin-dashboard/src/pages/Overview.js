@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import apiService from '../../services/api';
-import StatsCard from '../../components/StatsCard';
-import CreditScoreWidget from '../../components/CreditScoreWidget';
-import SalesChart from '../../components/SalesChart';
+import apiService from '../services/api';
+import StatsCard from '../components/StatsCard';
+import CreditScoreWidget from '../components/CreditScoreWidget';
+import SalesChart from '../components/SalesChart';
 import './Overview.css';
 
 const Overview = () => {
