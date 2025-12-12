@@ -5,6 +5,7 @@ import 'providers/product_provider.dart';
 import 'providers/cooperative_provider.dart';
 import 'providers/credit_score_provider.dart';
 import 'providers/audio_provider.dart';
+import 'screens/home_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/transaction_list_screen.dart';
 import 'screens/record_transaction_screen.dart';
@@ -62,6 +63,7 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = [
+    const HomeScreen(),
     const DashboardScreen(),
     const TransactionListScreen(),
     const InventoryScreen(),
@@ -80,6 +82,11 @@ class _MainScreenState extends State<MainScreen> {
           });
         },
         destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.mic_outlined),
+            selectedIcon: Icon(Icons.mic),
+            label: 'Record',
+          ),
           NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
             selectedIcon: Icon(Icons.dashboard),
@@ -102,7 +109,7 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ],
       ),
-      floatingActionButton: _currentIndex == 1
+      floatingActionButton: _currentIndex == 2
           ? FloatingActionButton(
               onPressed: () {
                 Navigator.push(
