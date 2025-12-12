@@ -36,16 +36,12 @@ def create_otp_record(email):
     Raises:
         ValidationError: If too many OTP requests
     """
-    # Debug logging disabled - file not available
-    pass
     # Check rate limiting (max 3 requests per 15 minutes)
     fifteen_minutes_ago = datetime.utcnow() - timedelta(minutes=15)
     recent_otps = OTPVerification.objects(
         email=email,
         created_at__gte=fifteen_minutes_ago
     ).count()
-    # Debug logging disabled
-    pass
     
     if recent_otps >= MAX_OTP_ATTEMPTS:
         from api.middleware.error_handler import ValidationError
@@ -57,8 +53,6 @@ def create_otp_record(email):
     # Generate new OTP
     otp_code = generate_otp()
     expires_at = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
-    # Debug logging disabled
-    pass
     
     # Create OTP record
     otp_record = OTPVerification(
@@ -67,24 +61,14 @@ def create_otp_record(email):
         expires_at=expires_at
     )
     otp_record.save()
-    # Debug logging disabled
-    pass
     
     # Send OTP email
-    # Debug logging disabled
-    pass
     try:
         send_otp_email(email, otp_code)
-        # Debug logging disabled
-        pass
     except Exception as e:
-        # Debug logging disabled
-        pass
         logger.error(f"Failed to send OTP email: {e}")
         # Delete the OTP record if email failed
         otp_record.delete()
-        # Debug logging disabled
-        pass
         raise
     
     logger.info(f"OTP created for {email}, expires at {expires_at}")

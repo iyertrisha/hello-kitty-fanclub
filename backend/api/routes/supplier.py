@@ -46,68 +46,20 @@ def register_supplier_route():
 @validate_request(required_fields=['email'])
 def request_otp_route():
     """Request OTP for login"""
-    # #region agent log (disabled - debug file not available)
-    # import json
-    # try:
-    #     with open(r'c:\hello-kitty-fanclub\.cursor\debug.log', 'a') as f:
-    #         f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"supplier.py:47","message":"request_otp_route entry","data":{"timestamp":__import__('time').time()*1000},"timestamp":int(__import__('time').time()*1000)}) + '\n')
-    # except:
-    #     pass
-    # #endregion
     try:
         data = request.validated_data
         email = data['email'].strip().lower()
-        # #region agent log (disabled - debug file not available)
-        # try:
-        #     import json
-        #     with open(r'c:\hello-kitty-fanclub\.cursor\debug.log', 'a') as f:
-        #         f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"supplier.py:52","message":"email received","data":{"email":email,"timestamp":__import__('time').time()*1000},"timestamp":int(__import__('time').time()*1000)}) + '\n')
-        # except:
-        #     pass
-        # #endregion
         
         # Create OTP record and send email
-        # #region agent log (disabled - debug file not available)
-        # try:
-        #     import json
-        #     with open(r'c:\hello-kitty-fanclub\.cursor\debug.log', 'a') as f:
-        #         f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"supplier.py:55","message":"before create_otp_record","data":{"email":email,"timestamp":__import__('time').time()*1000},"timestamp":int(__import__('time').time()*1000)}) + '\n')
-        # except:
-        #     pass
-        # #endregion
         create_otp_record(email)
-        # #region agent log (disabled - debug file not available)
-        # try:
-        #     import json
-        #     with open(r'c:\hello-kitty-fanclub\.cursor\debug.log', 'a') as f:
-        #         f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"A","location":"supplier.py:58","message":"after create_otp_record success","data":{"email":email,"timestamp":__import__('time').time()*1000},"timestamp":int(__import__('time').time()*1000)}) + '\n')
-        # except:
-        #     pass
-        # #endregion
         
         return jsonify({
             'success': True,
             'message': 'OTP sent to your email'
         }), 200
     except ValidationError as ve:
-        # #region agent log (disabled - debug file not available)
-        # try:
-        #     import json
-        #     with open(r'c:\hello-kitty-fanclub\.cursor\debug.log', 'a') as f:
-        #         f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"D","location":"supplier.py:66","message":"ValidationError caught","data":{"error":str(ve),"email":email if 'email' in locals() else None,"timestamp":__import__('time').time()*1000},"timestamp":int(__import__('time').time()*1000)}) + '\n')
-        # except:
-        #     pass
-        # #endregion
         raise
     except Exception as e:
-        # #region agent log (disabled - debug file not available)
-        # try:
-        #     import json
-        #     with open(r'c:\hello-kitty-fanclub\.cursor\debug.log', 'a') as f:
-        #         f.write(json.dumps({"sessionId":"debug-session","runId":"run1","hypothesisId":"D","location":"supplier.py:70","message":"Exception caught in request_otp","data":{"error":str(e),"error_type":type(e).__name__,"email":email if 'email' in locals() else None,"timestamp":__import__('time').time()*1000},"timestamp":int(__import__('time').time()*1000)}) + '\n')
-        # except:
-        #     pass
-        # #endregion
         logger.error(f"Error requesting OTP: {e}", exc_info=True)
         raise ValidationError(f"Failed to send OTP: {str(e)}")
 
