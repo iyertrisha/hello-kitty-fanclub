@@ -1,0 +1,172 @@
+"""
+MongoDB Models using MongoEngine
+"""
+from datetime import datetime
+from mongoengine import (
+    Document,
+    StringField,
+    FloatField,
+    IntField,
+    DateTimeField,
+    ListField,
+    ReferenceField,
+    BooleanField,
+    DictField,
+    EmbeddedDocument,
+    EmbeddedDocumentField
+)
+
+
+class Location(EmbeddedDocument):
+    """Geographic location embedded document"""
+    latitude = FloatField(required=True)
+    longitude = FloatField(required=True)
+    address = StringField()
+    
+    def to_dict(self):
+        """Convert location to dictionary"""
+        return {
+            'latitude': self.latitude,
+            'longitude': self.longitude,
+            'address': self.address
+        }
+
+
+class Shopkeeper(Document):
+    """Shopkeeper model"""
+    name = StringField(required=True, max_length=200)
+    address = StringField(required=True)
+    phone = StringField(required=True, max_length=20)
+    email = StringField(max_length=200)
+    wallet_address = StringField(required=True, unique=True, max_length=42)
+    blockchain_address = StringField(max_length=42)  # Same as wallet_address after registration
+    credit_score = IntField(default=0, min_value=0, max_value=900)  # Vishwas Score
+    registered_at = DateTimeField(default=datetime.utcnow)
+    is_active = BooleanField(default=True)
+    location = EmbeddedDocumentField(Location)
+    
+    meta = {
+        'collection': 'shopkeepers',
+        'indexes': [
+            'wallet_address',
+            'phone',
+            'email',
+            'registered_at'
+        ]
+    }
+
+
+class Customer(Document):
+    """Customer model"""
+    name = StringField(required=True, max_length=200)
+    phone = StringField(required=True, unique=True, max_length=20)
+    address = StringField()
+    created_at = DateTimeField(default=datetime.utcnow)
+    total_purchases = FloatField(default=0.0)
+    total_credits = FloatField(default=0.0)
+    credit_balance = FloatField(default=0.0)
+    
+    meta = {
+        'collection': 'customers',
+        'indexes': [
+            'phone',
+            'created_at'
+        ]
+    }
+
+
+class Product(Document):
+    """Product/Inventory model"""
+    name = StringField(required=True, max_length=200)
+    category = StringField(max_length=100)
+    price = FloatField(required=True, min_value=0)
+    stock_quantity = IntField(default=0, min_value=0)
+    shopkeeper_id = ReferenceField('Shopkeeper', required=True)
+    created_at = DateTimeField(default=datetime.utcnow)
+    description = StringField(max_length=500)
+    
+    meta = {
+        'collection': 'products',
+        'indexes': [
+            'shopkeeper_id',
+            'category',
+            'name',
+            ('shopkeeper_id', 'name')  # Compound index
+        ]
+    }
+
+
+class Transaction(Document):
+    """Transaction model"""
+    TRANSACTION_TYPES = ('sale', 'credit', 'repay')
+    STATUS_CHOICES = ('pending', 'verified', 'disputed', 'completed')
+    
+    type = StringField(required=True, choices=TRANSACTION_TYPES)
+    amount = FloatField(required=True, min_value=0)
+    shopkeeper_id = ReferenceField('Shopkeeper', required=True)
+    customer_id = ReferenceField('Customer', required=True)
+    product_id = ReferenceField('Product')  # Optional, for sales transactions
+    timestamp = DateTimeField(default=datetime.utcnow, required=True)
+    status = StringField(default='pending', choices=STATUS_CHOICES)
+    transcript_hash = StringField(max_length=66)  # SHA256 hash (0x + 64 hex chars)
+    blockchain_tx_id = StringField(max_length=66)  # Blockchain transaction hash
+    blockchain_block_number = IntField()
+    verification_status = StringField(max_length=50)  # Additional verification info
+    notes = StringField(max_length=500)
+    
+    meta = {
+        'collection': 'transactions',
+        'indexes': [
+            'shopkeeper_id',
+            'customer_id',
+            'timestamp',
+            'status',
+            'type',
+            ('shopkeeper_id', 'timestamp'),
+            ('customer_id', 'timestamp'),
+            'blockchain_tx_id'
+        ]
+    }
+
+
+class Cooperative(Document):
+    """Cooperative model"""
+    name = StringField(required=True, max_length=200)
+    description = StringField(max_length=1000)
+    revenue_split_percent = FloatField(default=0.0, min_value=0, max_value=100)
+    created_at = DateTimeField(default=datetime.utcnow)
+    members = ListField(ReferenceField('Shopkeeper'))
+    blockchain_coop_id = StringField(max_length=100)  # Cooperative ID on blockchain
+    is_active = BooleanField(default=True)
+    
+    meta = {
+        'collection': 'cooperatives',
+        'indexes': [
+            'name',
+            'created_at',
+            'blockchain_coop_id',
+            'members'
+        ]
+    }
+
+
+class BulkOrder(Document):
+    """Bulk order model for cooperatives"""
+    cooperative_id = ReferenceField('Cooperative', required=True)
+    product_name = StringField(required=True, max_length=200)
+    quantity = IntField(required=True, min_value=1)
+    unit_price = FloatField(required=True, min_value=0)
+    total_amount = FloatField(required=True, min_value=0)
+    created_at = DateTimeField(default=datetime.utcnow)
+    status = StringField(default='pending', choices=('pending', 'ordered', 'delivered', 'cancelled'))
+    order_details = DictField()  # Additional order information
+    
+    meta = {
+        'collection': 'bulk_orders',
+        'indexes': [
+            'cooperative_id',
+            'created_at',
+            'status'
+        ]
+    }
+
