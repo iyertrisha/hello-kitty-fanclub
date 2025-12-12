@@ -7,7 +7,9 @@ from services.shopkeeper import (
     get_shopkeeper,
     update_shopkeeper,
     calculate_credit_score,
-    get_inventory
+    get_inventory,
+    delete_shopkeeper,
+    toggle_shopkeeper_status
 )
 from database.models import Product
 from api.middleware.validation import validate_request
@@ -153,4 +155,55 @@ def update_inventory_route(shopkeeper_id, product_id):
     except Exception as e:
         logger.error(f"Error updating inventory: {e}", exc_info=True)
         raise ValidationError(f"Failed to update inventory: {str(e)}")
+
+
+@shopkeeper_bp.route('/<shopkeeper_id>', methods=['DELETE'])
+def delete_shopkeeper_route(shopkeeper_id):
+    """Delete shopkeeper"""
+    try:
+        # Validate ObjectId format
+        from bson.errors import InvalidId
+        from bson import ObjectId
+        try:
+            ObjectId(shopkeeper_id)
+        except InvalidId:
+            raise ValidationError(f"Invalid shopkeeper ID format: {shopkeeper_id}")
+        
+        delete_shopkeeper(shopkeeper_id)
+        return jsonify({'success': True, 'message': 'Shopkeeper deleted successfully'}), 200
+    except NotFoundError:
+        raise
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting shopkeeper: {e}", exc_info=True)
+        raise ValidationError(f"Failed to delete shopkeeper: {str(e)}")
+
+
+@shopkeeper_bp.route('/<shopkeeper_id>/toggle-status', methods=['POST'])
+def toggle_shopkeeper_status_route(shopkeeper_id):
+    """Toggle shopkeeper active/inactive status"""
+    try:
+        # Validate ObjectId format
+        from bson.errors import InvalidId
+        from bson import ObjectId
+        try:
+            ObjectId(shopkeeper_id)
+        except InvalidId:
+            raise ValidationError(f"Invalid shopkeeper ID format: {shopkeeper_id}")
+        
+        shopkeeper = toggle_shopkeeper_status(shopkeeper_id)
+        return jsonify({
+            'success': True,
+            'id': str(shopkeeper.id),
+            'is_active': shopkeeper.is_active,
+            'message': f"Shopkeeper is now {'active' if shopkeeper.is_active else 'inactive'}"
+        }), 200
+    except NotFoundError:
+        raise
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Error toggling shopkeeper status: {e}", exc_info=True)
+        raise ValidationError(f"Failed to toggle shopkeeper status: {str(e)}")
 

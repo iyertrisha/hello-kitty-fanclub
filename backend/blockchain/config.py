@@ -1,8 +1,16 @@
 import os
 from dotenv import load_dotenv
+from pathlib import Path
 
 # Load environment variables from .env file
-load_dotenv()
+# Try to load from backend directory first (where run.py is executed from)
+backend_dir = Path(__file__).parent.parent
+env_path = backend_dir / '.env'
+if env_path.exists():
+    load_dotenv(dotenv_path=env_path)
+else:
+    # Fallback to current directory
+    load_dotenv()
 
 
 class BlockchainConfig:
