@@ -1,0 +1,33 @@
+# Flask and API dependencies
+Flask>=2.3.0
+Flask-CORS>=4.0.0
+
+# MongoDB
+mongoengine>=0.27.0
+pymongo>=4.5.0
+
+# Data processing
+pandas>=2.0.0
+
+# Environment variables
+python-dotenv>=1.0.0
+
+# Blockchain dependencies (from blockchain module)
+web3>=6.0.0
+eth-account>=0.11.0
+
+# HTTP requests (for ML service integration)
+requests>=2.31.0
+
+# Date/time utilities
+python-dateutil>=2.8.2
+
+# JSON handling
+jsonschema>=4.19.0
+
+# Logging
+colorlog>=6.7.0
+
+# DNS resolver for MongoDB SRV records
+dnspython>=2.4.0
+
