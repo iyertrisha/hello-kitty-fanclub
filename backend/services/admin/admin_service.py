@@ -168,6 +168,8 @@ def get_all_stores(filters=None, page=1, page_size=20):
             'wallet_address': store.wallet_address,
             'credit_score': store.credit_score,
             'is_active': store.is_active,
+            'flagged': getattr(store, 'flagged', False),
+            'flag_reason': getattr(store, 'flag_reason', None),
             'total_sales_30d': recent_sales,
             'registered_at': store.registered_at.isoformat() if store.registered_at else None
         })
@@ -299,14 +301,56 @@ def get_blockchain_logs(filters=None, page=1, page_size=20):
         has_blockchain = bool(transaction.blockchain_tx_id)
         blockchain_status = 'verified' if has_blockchain else 'pending_blockchain'
         
+        # Safely get shopkeeper info (handle missing references)
+        shopkeeper_id = None
+        shopkeeper_name = 'Unknown'
+        try:
+            # Get ObjectId from raw data to avoid dereferencing
+            shopkeeper_ref = transaction._data.get('shopkeeper_id')
+            if shopkeeper_ref:
+                shopkeeper_id = str(shopkeeper_ref)
+                # Try to dereference only if needed for name
+                try:
+                    # Use select_related or try to get the document
+                    shopkeeper = Shopkeeper.objects(id=shopkeeper_ref).first()
+                    if shopkeeper:
+                        shopkeeper_name = shopkeeper.name
+                    else:
+                        shopkeeper_name = 'Deleted Shopkeeper'
+                except Exception:
+                    shopkeeper_name = 'Deleted Shopkeeper'
+        except Exception as e:
+            logger.warning(f"Error accessing shopkeeper for transaction {transaction.id}: {e}")
+        
+        # Safely get customer info (handle missing references)
+        customer_id = None
+        customer_name = 'Unknown'
+        try:
+            # Get ObjectId from raw data to avoid dereferencing
+            customer_ref = transaction._data.get('customer_id')
+            if customer_ref:
+                customer_id = str(customer_ref)
+                # Try to dereference only if needed for name
+                try:
+                    # Use select_related or try to get the document
+                    customer = Customer.objects(id=customer_ref).first()
+                    if customer:
+                        customer_name = customer.name
+                    else:
+                        customer_name = 'Deleted Customer'
+                except Exception:
+                    customer_name = 'Deleted Customer'
+        except Exception as e:
+            logger.warning(f"Error accessing customer for transaction {transaction.id}: {e}")
+        
         result.append({
             'id': str(transaction.id),
             'type': transaction.type,
             'amount': transaction.amount,
-            'shopkeeper_id': str(transaction.shopkeeper_id.id),
-            'shopkeeper_name': transaction.shopkeeper_id.name if transaction.shopkeeper_id else 'Unknown',
-            'customer_id': str(transaction.customer_id.id),
-            'customer_name': transaction.customer_id.name if transaction.customer_id else 'Unknown',
+            'shopkeeper_id': shopkeeper_id or 'N/A',
+            'shopkeeper_name': shopkeeper_name,
+            'customer_id': customer_id or 'N/A',
+            'customer_name': customer_name,
             'timestamp': transaction.timestamp.isoformat() if transaction.timestamp else None,
             # Frontend expects 'transaction_hash', backend has 'blockchain_tx_id'
             'transaction_hash': transaction.blockchain_tx_id or f"pending-{str(transaction.id)[-8:]}",

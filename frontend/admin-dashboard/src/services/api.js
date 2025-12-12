@@ -231,6 +231,17 @@ export const apiService = {
     }
   },
 
+  // Cooperative Blockchain Logs
+  getCooperativeBlockchainLogs: async (cooperativeId, filters = {}) => {
+    try {
+      const response = await api.get(`/cooperative/${cooperativeId}/blockchain-logs`, { params: filters });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching cooperative blockchain logs:', error);
+      throw error;
+    }
+  },
+
 
   // ==========================================
   // SHARED/UTILITY ENDPOINTS

@@ -46,23 +46,57 @@ const Overview = () => {
         activeCooperatives: data.active_cooperatives || 0,
       });
 
-      // Credit Score Stats
-      if (data.credit_score_stats) {
-        setCreditScoreStats(data.credit_score_stats);
-      } else {
-        // Calculate from stores if not provided
-        const stores = data.stores || [];
-        const scores = stores.map(s => s.credit_score || 0).filter(s => s > 0);
-        const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-        setCreditScoreStats({
-          average: Math.round(avg),
-          distribution: {
-            high: scores.filter(s => s >= 700).length,
-            medium: scores.filter(s => s >= 500 && s < 700).length,
-            low: scores.filter(s => s < 500).length
-          },
-          totalStores: stores.length
-        });
+      // Credit Score Stats - Try to get from dedicated endpoint first
+      try {
+        const creditScoresData = await apiService.getAllCreditScores();
+        if (creditScoresData && creditScoresData.scores) {
+          const scores = creditScoresData.scores.map(s => s.credit_score || 0).filter(s => s > 0);
+          const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+          setCreditScoreStats({
+            average: Math.round(avg),
+            distribution: {
+              high: scores.filter(s => s >= 700).length,
+              medium: scores.filter(s => s >= 500 && s < 700).length,
+              low: scores.filter(s => s < 500).length
+            },
+            totalStores: creditScoresData.total || scores.length
+          });
+        } else if (data.credit_score_stats) {
+          setCreditScoreStats(data.credit_score_stats);
+        } else {
+          // Fallback: Calculate from stores if not provided
+          const stores = data.stores || [];
+          const scores = stores.map(s => s.credit_score || 0).filter(s => s > 0);
+          const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+          setCreditScoreStats({
+            average: Math.round(avg),
+            distribution: {
+              high: scores.filter(s => s >= 700).length,
+              medium: scores.filter(s => s >= 500 && s < 700).length,
+              low: scores.filter(s => s < 500).length
+            },
+            totalStores: stores.length
+          });
+        }
+      } catch (error) {
+        console.warn('Error fetching credit scores, using fallback:', error);
+        // Fallback to data.credit_score_stats or calculate from stores
+        if (data.credit_score_stats) {
+          setCreditScoreStats(data.credit_score_stats);
+        } else {
+          const stores = data.stores || [];
+          const scores = stores.map(s => s.credit_score || 0).filter(s => s > 0);
+          const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+          setCreditScoreStats({
+            average: Math.round(avg),
+            distribution: {
+              high: scores.filter(s => s >= 700).length,
+              medium: scores.filter(s => s >= 500 && s < 700).length,
+              low: scores.filter(s => s < 500).length
+            },
+            totalStores: stores.length
+          });
+        }
       }
 
       setRecentActivity(data.recent_activity || []);

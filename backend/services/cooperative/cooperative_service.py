@@ -30,18 +30,29 @@ def get_cooperatives():
     Returns:
         list: List of cooperative dictionaries
     """
-    cooperatives = Cooperative.objects(is_active=True)
+    # Get all cooperatives (exclude only those explicitly set to False)
+    # This includes: is_active=True, is_active=None, and is_active not set
+    # Simple approach: get all and filter out False
+    all_coops = Cooperative.objects()
+    cooperatives = [c for c in all_coops if getattr(c, 'is_active', True) != False]
+    
+    logger.info(f"Found {len(cooperatives)} cooperatives (out of {all_coops.count()} total)")
     
     result = []
     for coop in cooperatives:
         # Include members data for frontend
         members = []
-        for member in coop.members:
-            members.append({
-                'id': str(member.id),
-                'name': member.name,
-                'address': member.address,
-            })
+        if coop.members:
+            for member in coop.members:
+                try:
+                    members.append({
+                        'id': str(member.id),
+                        'name': member.name,
+                        'address': member.address or '',
+                    })
+                except Exception as e:
+                    logger.warning(f"Error processing member {member}: {e}")
+                    continue
         
         result.append({
             'id': str(coop.id),
