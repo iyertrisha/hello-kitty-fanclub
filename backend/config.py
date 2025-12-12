@@ -1,7 +1,15 @@
 import os
 from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv()
+# Load .env from backend directory
+backend_dir = Path(__file__).parent
+env_path = backend_dir / '.env'
+if env_path.exists():
+    load_dotenv(dotenv_path=env_path, override=True)
+else:
+    # Fallback to default behavior
+    load_dotenv(override=True)
 
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'a_very_secret_key')
