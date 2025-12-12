@@ -142,3 +142,105 @@ def get_blockchain_logs_route():
         logger.error(f"Error getting blockchain logs: {e}", exc_info=True)
         raise ValidationError(f"Failed to get blockchain logs: {str(e)}")
 
+
+@admin_bp.route('/stores/<store_id>/flag', methods=['POST'])
+@validate_request(required_fields=['reason'])
+def flag_store_route(store_id):
+    """Flag a store for review (Platform Admin only)"""
+    try:
+        from database.models import Shopkeeper
+        from bson.errors import InvalidId
+        from bson import ObjectId
+        
+        try:
+            ObjectId(store_id)
+        except InvalidId:
+            raise ValidationError(f"Invalid store ID format: {store_id}")
+        
+        shopkeeper = Shopkeeper.objects.get(id=store_id)
+        data = request.validated_data
+        
+        shopkeeper.flagged = True
+        shopkeeper.flag_reason = data.get('reason', '')
+        shopkeeper.flagged_at = datetime.utcnow()
+        shopkeeper.save()
+        
+        logger.info(f"Store {store_id} flagged by admin: {data.get('reason')}")
+        
+        return jsonify({
+            'id': str(shopkeeper.id),
+            'name': shopkeeper.name,
+            'flagged': shopkeeper.flagged,
+            'flag_reason': shopkeeper.flag_reason,
+            'message': f'Store {shopkeeper.name} flagged for review'
+        }), 200
+    except Shopkeeper.DoesNotExist:
+        raise ValidationError(f"Store {store_id} not found")
+    except Exception as e:
+        logger.error(f"Error flagging store: {e}", exc_info=True)
+        raise ValidationError(f"Failed to flag store: {str(e)}")
+
+
+@admin_bp.route('/stores/<store_id>/flag', methods=['DELETE'])
+def unflag_store_route(store_id):
+    """Remove flag from a store"""
+    try:
+        from database.models import Shopkeeper
+        from bson.errors import InvalidId
+        from bson import ObjectId
+        
+        try:
+            ObjectId(store_id)
+        except InvalidId:
+            raise ValidationError(f"Invalid store ID format: {store_id}")
+        
+        shopkeeper = Shopkeeper.objects.get(id=store_id)
+        
+        shopkeeper.flagged = False
+        shopkeeper.flag_reason = None
+        shopkeeper.flagged_at = None
+        shopkeeper.save()
+        
+        logger.info(f"Flag removed from store {store_id}")
+        
+        return jsonify({
+            'id': str(shopkeeper.id),
+            'name': shopkeeper.name,
+            'flagged': shopkeeper.flagged,
+            'message': f'Flag removed from store {shopkeeper.name}'
+        }), 200
+    except Shopkeeper.DoesNotExist:
+        raise ValidationError(f"Store {store_id} not found")
+    except Exception as e:
+        logger.error(f"Error unflagging store: {e}", exc_info=True)
+        raise ValidationError(f"Failed to unflag store: {str(e)}")
+
+
+@admin_bp.route('/credit-scores', methods=['GET'])
+def get_all_credit_scores_route():
+    """Get all shopkeeper credit scores (Platform Admin)"""
+    try:
+        from database.models import Shopkeeper
+        
+        shopkeepers = Shopkeeper.objects(is_active=True).only('id', 'name', 'credit_score', 'wallet_address')
+        
+        scores = []
+        for shopkeeper in shopkeepers:
+            scores.append({
+                'shopkeeper_id': str(shopkeeper.id),
+                'shopkeeper_name': shopkeeper.name,
+                'credit_score': shopkeeper.credit_score,
+                'wallet_address': shopkeeper.wallet_address
+            })
+        
+        # Sort by credit score descending
+        scores.sort(key=lambda x: x['credit_score'], reverse=True)
+        
+        return jsonify({
+            'scores': scores,
+            'total': len(scores)
+        }), 200
+    except Exception as e:
+        logger.error(f"Error getting credit scores: {e}", exc_info=True)
+        raise ValidationError(f"Failed to get credit scores: {str(e)}")
+
