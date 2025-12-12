@@ -66,6 +66,7 @@ def get_cooperatives_admin_route():
     try:
         from services.cooperative import get_cooperatives
         cooperatives = get_cooperatives()
+        logger.info(f"Returning {len(cooperatives)} cooperatives to frontend")
         return jsonify({'cooperatives': cooperatives}), 200
     except Exception as e:
         logger.error(f"Error getting cooperatives: {e}", exc_info=True)
