@@ -40,10 +40,20 @@ const Analytics = () => {
       setLoading(true);
       const data = await apiService.getAnalytics({ date_range: dateRange });
       
+      // Backend returns individual credit scores per shopkeeper
+      // We need to convert to ranges for the bar chart
+      const creditScoreRanges = processCreditScores(data.credit_scores || []);
+      
+      // Map revenue_by_coop to include 'name' field for pie chart
+      const revenueByCoop = (data.revenue_by_coop || []).map(coop => ({
+        ...coop,
+        name: coop.coop_name || coop.name || `Coop ${coop.coop_id}`,
+      }));
+      
       setAnalyticsData({
         salesTrend: data.sales_trend || [],
-        creditScores: data.credit_scores || [],
-        revenueByCoop: data.revenue_by_coop || [],
+        creditScores: creditScoreRanges,
+        revenueByCoop: revenueByCoop,
         transactionVolume: data.transaction_volume || [],
       });
     } catch (error) {
@@ -51,6 +61,30 @@ const Analytics = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Convert individual credit scores to ranges for chart display
+  const processCreditScores = (scores) => {
+    if (!scores || scores.length === 0) return [];
+    
+    // If already in range format, return as is
+    if (scores[0] && scores[0].range) return scores;
+    
+    // Convert individual scores to ranges
+    const ranges = {
+      '300-500': 0,
+      '500-700': 0,
+      '700-900': 0,
+    };
+    
+    scores.forEach(item => {
+      const score = item.score || 0;
+      if (score < 500) ranges['300-500']++;
+      else if (score < 700) ranges['500-700']++;
+      else ranges['700-900']++;
+    });
+    
+    return Object.entries(ranges).map(([range, count]) => ({ range, count }));
   };
 
   if (loading) {

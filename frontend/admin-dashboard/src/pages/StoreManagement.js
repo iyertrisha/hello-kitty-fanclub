@@ -16,9 +16,16 @@ const StoreManagement = () => {
     try {
       setLoading(true);
       const data = await apiService.getStores();
-      const storesList = data.data || data || [];
-      setStores(storesList);
-      setFilteredStores(storesList);
+      // Backend returns {stores: [...], pagination: {...}}
+      const storesList = data.stores || data.data || data || [];
+      // Map backend fields to frontend expected format
+      const mappedStores = storesList.map(store => ({
+        ...store,
+        status: store.is_active ? 'active' : 'inactive',
+        total_sales: store.total_sales_30d || 0,
+      }));
+      setStores(mappedStores);
+      setFilteredStores(mappedStores);
     } catch (error) {
       console.error('Error loading stores:', error);
     } finally {

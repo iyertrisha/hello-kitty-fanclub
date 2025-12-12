@@ -118,6 +118,13 @@ def main():
     result = test_endpoint("GET", "/admin/overview")
     if result["success"] and result["data"]:
         test_ids["overview"] = result["data"]
+        # Verify frontend-expected fields are present
+        expected_fields = ["total_stores", "transactions", "revenue", "active_cooperatives", "sales_trend", "recent_activity"]
+        missing_fields = [f for f in expected_fields if f not in result["data"]]
+        if missing_fields:
+            print(f"         WARNING: Missing frontend fields: {missing_fields}")
+        else:
+            print(f"         All frontend fields present")
     
     # GET /api/admin/stores
     result = test_endpoint("GET", "/admin/stores")
@@ -125,6 +132,14 @@ def main():
         stores = result["data"]["stores"]
         if stores:
             test_ids["shopkeeper_id"] = stores[0].get("id") or str(stores[0].get("_id", ""))
+            # Verify frontend-expected fields
+            store_fields = ["id", "name", "address", "credit_score", "is_active"]
+            first_store = stores[0]
+            missing = [f for f in store_fields if f not in first_store]
+            if missing:
+                print(f"         WARNING: Store missing fields: {missing}")
+            else:
+                print(f"         Store data format OK")
     
     # GET /api/admin/cooperatives
     result = test_endpoint("GET", "/admin/cooperatives")
@@ -132,12 +147,41 @@ def main():
         cooperatives = result["data"]["cooperatives"]
         if cooperatives:
             test_ids["cooperative_id"] = cooperatives[0].get("id") or str(cooperatives[0].get("_id", ""))
+            # Verify frontend-expected fields
+            coop_fields = ["id", "name", "revenue_split_percent", "members", "member_count"]
+            first_coop = cooperatives[0]
+            missing = [f for f in coop_fields if f not in first_coop]
+            if missing:
+                print(f"         WARNING: Cooperative missing fields: {missing}")
+            else:
+                print(f"         Cooperative data format OK")
     
     # GET /api/admin/analytics
-    test_endpoint("GET", "/admin/analytics")
+    result = test_endpoint("GET", "/admin/analytics")
+    if result["success"] and result["data"]:
+        # Verify frontend-expected fields
+        analytics_fields = ["sales_trend", "credit_scores", "revenue_by_coop"]
+        missing = [f for f in analytics_fields if f not in result["data"]]
+        if missing:
+            print(f"         WARNING: Analytics missing fields: {missing}")
+        else:
+            print(f"         Analytics data format OK")
     
     # GET /api/admin/blockchain-logs
-    test_endpoint("GET", "/admin/blockchain-logs")
+    result = test_endpoint("GET", "/admin/blockchain-logs")
+    if result["success"] and result["data"] and "logs" in result["data"]:
+        logs = result["data"]["logs"]
+        if logs:
+            # Verify frontend-expected fields (transaction_hash, block_number)
+            log_fields = ["id", "transaction_hash", "block_number", "shopkeeper_id", "timestamp"]
+            first_log = logs[0]
+            missing = [f for f in log_fields if f not in first_log]
+            if missing:
+                print(f"         WARNING: Blockchain log missing fields: {missing}")
+            else:
+                print(f"         Blockchain log data format OK")
+        else:
+            print(f"         No blockchain logs found (expected if no blockchain transactions yet)")
     
     # ==================== TRANSACTION ENDPOINTS ====================
     print("\nTRANSACTION ENDPOINTS")
@@ -288,6 +332,14 @@ def main():
     print("\nBLOCKCHAIN ENDPOINTS")
     print("-" * 80)
     
+    # GET /api/blockchain/status (NEW - check blockchain availability)
+    result = test_endpoint("GET", "/blockchain/status")
+    if result["success"] and result["data"]:
+        blockchain_available = result["data"].get("available", False)
+        blockchain_configured = result["data"].get("configured", False)
+        print(f"         Blockchain Available: {blockchain_available}")
+        print(f"         Blockchain Configured: {blockchain_configured}")
+    
     # POST /api/blockchain/record-transaction
     if test_ids.get("transaction_id"):
         blockchain_data = {
@@ -348,12 +400,12 @@ def main():
     print("=" * 80)
     
     categories = {
-        "Admin": [r for r in test_results if "/admin" in r["endpoint"]],
+        "Admin (Frontend Integration)": [r for r in test_results if "/admin" in r["endpoint"]],
         "Transactions": [r for r in test_results if "/transactions" in r["endpoint"]],
         "Shopkeeper": [r for r in test_results if "/shopkeeper" in r["endpoint"]],
         "Customer": [r for r in test_results if "/customer" in r["endpoint"]],
         "Cooperative": [r for r in test_results if "/cooperative" in r["endpoint"]],
-        "Blockchain": [r for r in test_results if "/blockchain" in r["endpoint"]],
+        "Blockchain Integration": [r for r in test_results if "/blockchain" in r["endpoint"]],
         "Error Handling": [r for r in test_results if r["endpoint"].startswith("/") and 
                           (r["status_code"] in [400, 404] or "000000000000000000000000" in r["endpoint"])]
     }
@@ -375,6 +427,30 @@ def main():
             print(f"   Status: {result['status_code']}")
             if result['error']:
                 print(f"   Error: {result['error']}")
+    
+    # Integration readiness summary
+    print("\n" + "=" * 80)
+    print("FRONTEND INTEGRATION READINESS")
+    print("=" * 80)
+    
+    admin_results = [r for r in test_results if "/admin" in r["endpoint"]]
+    admin_passed = all(r["success"] for r in admin_results) if admin_results else False
+    
+    blockchain_results = [r for r in test_results if "/blockchain/status" in r["endpoint"]]
+    blockchain_status = blockchain_results[0] if blockchain_results else None
+    
+    print(f"\nAdmin Dashboard Endpoints: {'READY' if admin_passed else 'NOT READY'}")
+    if blockchain_status and blockchain_status.get("success"):
+        print(f"Blockchain Service: {'Available' if 'available' in str(blockchain_status.get('response_preview', '')) else 'Check status endpoint'}")
+    else:
+        print(f"Blockchain Service: Status endpoint not responding")
+    
+    # Check if all frontend-required endpoints passed
+    frontend_endpoints = ["/admin/overview", "/admin/stores", "/admin/cooperatives", "/admin/analytics", "/admin/blockchain-logs"]
+    frontend_results = {ep: next((r for r in test_results if r["endpoint"] == ep), None) for ep in frontend_endpoints}
+    
+    all_frontend_ready = all(r and r["success"] for r in frontend_results.values())
+    print(f"\nFrontend Integration: {'ALL ENDPOINTS READY' if all_frontend_ready else 'SOME ENDPOINTS FAILING'}")
     
     # Save detailed report to file
     report = {

@@ -3,6 +3,7 @@ Blockchain routes - Integration with Trisha's contract_service.py
 """
 from flask import Blueprint, request, jsonify
 import sys
+import os
 from pathlib import Path
 import logging
 
@@ -11,31 +12,69 @@ logger = logging.getLogger(__name__)
 blockchain_bp = Blueprint('blockchain', __name__)
 
 # Import blockchain service
+BLOCKCHAIN_AVAILABLE = False
+BlockchainService = None
+BlockchainConfig = None
+
 try:
+    # Add blockchain directory to path
     blockchain_path = Path(__file__).parent.parent.parent / 'blockchain'
     sys.path.insert(0, str(blockchain_path))
+    
+    # Import from blockchain module
     from utils.contract_service import BlockchainService
     from config import BlockchainConfig
-    BLOCKCHAIN_AVAILABLE = True
+    
+    # Check if blockchain is properly configured
+    if BlockchainConfig.CONTRACT_ADDRESS and BlockchainConfig.PRIVATE_KEY:
+        BLOCKCHAIN_AVAILABLE = True
+        logger.info("Blockchain service loaded successfully")
+    else:
+        logger.warning("Blockchain service loaded but not configured (missing CONTRACT_ADDRESS or PRIVATE_KEY)")
+        BLOCKCHAIN_AVAILABLE = False
 except ImportError as e:
     logger.warning(f"Blockchain service not available: {e}")
-    BlockchainService = None
-    BLOCKCHAIN_AVAILABLE = False
+except Exception as e:
+    logger.warning(f"Error loading blockchain service: {e}")
 
 
 def get_blockchain_service():
     """Get initialized blockchain service"""
     if not BLOCKCHAIN_AVAILABLE:
-        raise Exception("Blockchain service not available")
+        raise Exception("Blockchain service not available - check if blockchain module is installed")
+    
+    if BlockchainConfig is None:
+        raise Exception("BlockchainConfig not loaded")
     
     if not BlockchainConfig.CONTRACT_ADDRESS:
-        raise Exception("Contract address not configured")
+        raise Exception("Contract address not configured in .env file")
+    
+    if not BlockchainConfig.PRIVATE_KEY:
+        raise Exception("Private key not configured in .env file")
     
     return BlockchainService(
         rpc_url=BlockchainConfig.POLYGON_AMOY_RPC_URL,
         private_key=BlockchainConfig.PRIVATE_KEY,
         contract_address=BlockchainConfig.CONTRACT_ADDRESS
     )
+
+
+@blockchain_bp.route('/status', methods=['GET'])
+def get_blockchain_status():
+    """Get blockchain service status"""
+    status = {
+        'available': BLOCKCHAIN_AVAILABLE,
+        'configured': False,
+        'contract_address': None,
+        'network': None
+    }
+    
+    if BLOCKCHAIN_AVAILABLE and BlockchainConfig:
+        status['configured'] = bool(BlockchainConfig.CONTRACT_ADDRESS and BlockchainConfig.PRIVATE_KEY)
+        status['contract_address'] = BlockchainConfig.CONTRACT_ADDRESS[:10] + '...' if BlockchainConfig.CONTRACT_ADDRESS else None
+        status['network'] = 'Polygon Amoy' if 'amoy' in BlockchainConfig.POLYGON_AMOY_RPC_URL.lower() else 'Local'
+    
+    return jsonify(status), 200
 
 
 @blockchain_bp.route('/record-transaction', methods=['POST'])

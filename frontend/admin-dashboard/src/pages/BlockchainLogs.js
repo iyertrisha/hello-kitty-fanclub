@@ -25,7 +25,8 @@ const BlockchainLogs = () => {
     try {
       setLoading(true);
       const data = await apiService.getBlockchainLogs();
-      const logsList = data.data || data || [];
+      // Backend returns {logs: [...], pagination: {...}}
+      const logsList = data.logs || data.data || data || [];
       setLogs(logsList);
       setFilteredLogs(logsList);
     } catch (error) {

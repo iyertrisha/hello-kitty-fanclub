@@ -34,13 +34,24 @@ def get_cooperatives():
     
     result = []
     for coop in cooperatives:
+        # Include members data for frontend
+        members = []
+        for member in coop.members:
+            members.append({
+                'id': str(member.id),
+                'name': member.name,
+                'address': member.address,
+            })
+        
         result.append({
             'id': str(coop.id),
             'name': coop.name,
             'description': coop.description,
             'revenue_split_percent': coop.revenue_split_percent,
+            'revenue_split': coop.revenue_split_percent,  # Alias for frontend
             'created_at': coop.created_at.isoformat() if coop.created_at else None,
             'member_count': len(coop.members),
+            'members': members,  # Include members for frontend
             'blockchain_coop_id': coop.blockchain_coop_id,
             'is_active': coop.is_active
         })
