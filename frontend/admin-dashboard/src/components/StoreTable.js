@@ -6,6 +6,7 @@ const StoreTable = ({
   onView,
   onEdit,
   onDelete,
+  onToggleStatus,
   onSearch,
   onFilter,
 }) => {
@@ -140,6 +141,7 @@ const StoreTable = ({
                         <button
                           className="action-button view-button"
                           onClick={() => onView(store.id)}
+                          title="View Details"
                         >
                           View
                         </button>
@@ -148,14 +150,25 @@ const StoreTable = ({
                         <button
                           className="action-button edit-button"
                           onClick={() => onEdit(store.id)}
+                          title="Edit Store"
                         >
                           Edit
+                        </button>
+                      )}
+                      {onToggleStatus && (
+                        <button
+                          className={`action-button toggle-button ${store.status === 'active' ? 'deactivate' : 'activate'}`}
+                          onClick={() => onToggleStatus(store.id)}
+                          title={store.status === 'active' ? 'Deactivate' : 'Activate'}
+                        >
+                          {store.status === 'active' ? 'Deactivate' : 'Activate'}
                         </button>
                       )}
                       {onDelete && (
                         <button
                           className="action-button delete-button"
                           onClick={() => onDelete(store.id)}
+                          title="Delete Store"
                         >
                           Delete
                         </button>

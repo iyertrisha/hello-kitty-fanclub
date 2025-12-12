@@ -258,6 +258,9 @@ def get_blockchain_logs(filters=None, page=1, page_size=20):
     """
     Get blockchain transaction logs
     
+    Shows all verified transactions. Those with blockchain_tx_id are marked as 
+    blockchain-verified, others show their verification status.
+    
     Args:
         filters: Dictionary of filters (shopkeeper_id, date_from, date_to)
         page: Page number (1-indexed)
@@ -269,7 +272,9 @@ def get_blockchain_logs(filters=None, page=1, page_size=20):
     if filters is None:
         filters = {}
     
-    query = Transaction.objects(blockchain_tx_id__exists=True)
+    # Show all verified transactions (not just those with blockchain_tx_id)
+    # This provides visibility into transactions even before blockchain recording
+    query = Transaction.objects(status__in=['verified', 'completed'])
     
     # Apply filters
     if 'shopkeeper_id' in filters:
@@ -290,20 +295,28 @@ def get_blockchain_logs(filters=None, page=1, page_size=20):
     
     result = []
     for transaction in transactions:
+        # Determine blockchain status
+        has_blockchain = bool(transaction.blockchain_tx_id)
+        blockchain_status = 'verified' if has_blockchain else 'pending_blockchain'
+        
         result.append({
             'id': str(transaction.id),
             'type': transaction.type,
             'amount': transaction.amount,
             'shopkeeper_id': str(transaction.shopkeeper_id.id),
+            'shopkeeper_name': transaction.shopkeeper_id.name if transaction.shopkeeper_id else 'Unknown',
             'customer_id': str(transaction.customer_id.id),
+            'customer_name': transaction.customer_id.name if transaction.customer_id else 'Unknown',
             'timestamp': transaction.timestamp.isoformat() if transaction.timestamp else None,
             # Frontend expects 'transaction_hash', backend has 'blockchain_tx_id'
-            'transaction_hash': transaction.blockchain_tx_id,
+            'transaction_hash': transaction.blockchain_tx_id or f"pending-{str(transaction.id)[-8:]}",
             'blockchain_tx_id': transaction.blockchain_tx_id,
             'block_number': transaction.blockchain_block_number,
             'blockchain_block_number': transaction.blockchain_block_number,
-            'status': transaction.status,
-            'transcript_hash': transaction.transcript_hash
+            'status': blockchain_status if has_blockchain else transaction.status,
+            'db_status': transaction.status,
+            'transcript_hash': transaction.transcript_hash,
+            'has_blockchain_record': has_blockchain
         })
     
     return result, total_count, page, page_size

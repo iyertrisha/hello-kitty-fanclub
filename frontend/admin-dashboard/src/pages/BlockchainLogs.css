@@ -123,3 +123,115 @@
   font-size: 16px;
 }
 
+/* Blockchain Status Banner */
+.blockchain-status-banner {
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+}
+
+.blockchain-status-banner.available {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.blockchain-status-banner.unavailable {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.status-icon {
+  font-size: 12px;
+}
+
+/* Summary Section */
+.logs-summary {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #666;
+}
+
+.logs-summary span {
+  font-weight: 500;
+}
+
+/* Table Row Styles */
+.logs-table tbody tr.blockchain-verified {
+  background: #f8fff8;
+}
+
+.hash-text {
+  color: #1976d2;
+  font-weight: 500;
+}
+
+.pending-hash {
+  color: #999;
+  font-style: italic;
+}
+
+/* Shopkeeper Cell */
+.shopkeeper-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.shopkeeper-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.shopkeeper-id {
+  font-size: 11px;
+  color: #999;
+  font-family: monospace;
+}
+
+/* Amount Cell */
+.amount-cell {
+  font-weight: 600;
+  color: #333;
+}
+
+/* Type Badge Variations */
+.type-badge.type-sale {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.type-badge.type-credit {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.type-badge.type-repay {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+/* Status Badge Variations */
+.status-badge.on-chain {
+  background: #e8f5e9;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.status-badge.off-chain {
+  background: #f5f5f5;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.no-action {
+  color: #ccc;
+}
+

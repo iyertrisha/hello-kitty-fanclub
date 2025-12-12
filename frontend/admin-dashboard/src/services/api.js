@@ -65,6 +65,26 @@ export const apiService = {
     }
   },
 
+  getStore: async (storeId) => {
+    try {
+      const response = await api.get(`/shopkeeper/${storeId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching store:', error);
+      throw error;
+    }
+  },
+
+  createStore: async (data) => {
+    try {
+      const response = await api.post('/shopkeeper/register', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating store:', error);
+      throw error;
+    }
+  },
+
   updateStore: async (storeId, data) => {
     try {
       const response = await api.put(`/shopkeeper/${storeId}`, data);
@@ -81,6 +101,16 @@ export const apiService = {
       return response.data;
     } catch (error) {
       console.error('Error deleting store:', error);
+      throw error;
+    }
+  },
+
+  toggleStoreStatus: async (storeId) => {
+    try {
+      const response = await api.post(`/shopkeeper/${storeId}/toggle-status`);
+      return response.data;
+    } catch (error) {
+      console.error('Error toggling store status:', error);
       throw error;
     }
   },
