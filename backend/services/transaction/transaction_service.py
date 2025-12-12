@@ -2,7 +2,7 @@
 Transaction service - Business logic for transactions
 """
 from datetime import datetime, timedelta
-from database.models import Transaction, Shopkeeper, Customer, Product
+from database.models import Transaction, Shopkeeper, Customer, Product, PendingConfirmation
 from api.middleware.error_handler import ValidationError, NotFoundError
 from services.transaction.shopkeeper_history_helper import get_shopkeeper_history
 from services.transaction.amount_utils import rupees_to_paise, paise_to_rupees
@@ -650,4 +650,125 @@ def aggregate_daily_sales(shopkeeper_id, start_date=None, end_date=None):
         daily_sales[date_key]['total_amount'] += transaction.amount
     
     return list(daily_sales.values())
+
+
+def create_pending_confirmation(transaction_id, phone, amount, shopkeeper_name, expires_at=None):
+    """
+    Create a pending confirmation record for WhatsApp credit confirmation
+    
+    Args:
+        transaction_id: Transaction ID (string or ObjectId)
+        phone: Customer phone number (normalized, e.g., +919876543210)
+        amount: Transaction amount
+        shopkeeper_name: Shopkeeper name
+        expires_at: Expiration datetime (defaults to 24 hours from now)
+    
+    Returns:
+        PendingConfirmation: Created pending confirmation object
+    """
+    try:
+        from bson.errors import InvalidId
+        transaction = Transaction.objects.get(id=transaction_id)
+    except (Transaction.DoesNotExist, InvalidId):
+        raise NotFoundError(f"Transaction {transaction_id} not found")
+    
+    if expires_at is None:
+        expires_at = datetime.utcnow() + timedelta(hours=24)
+    
+    # Normalize phone number (ensure + prefix)
+    if not phone.startswith('+'):
+        phone = f'+{phone.lstrip("+")}'
+    
+    pending_confirmation = PendingConfirmation(
+        transaction_id=transaction,
+        phone=phone,
+        amount=amount,
+        shopkeeper=shopkeeper_name,
+        status='pending',
+        expires_at=expires_at
+    )
+    
+    pending_confirmation.save()
+    
+    logger.info(f"Created pending confirmation for transaction {transaction_id}, phone {phone}")
+    
+    return pending_confirmation
+
+
+def get_pending_confirmation_by_phone(phone):
+    """
+    Get the latest pending confirmation for a phone number
+    
+    Args:
+        phone: Customer phone number (normalized)
+    
+    Returns:
+        PendingConfirmation or None: Latest pending confirmation, or None if not found
+    """
+    # Normalize phone number
+    if not phone.startswith('+'):
+        phone = f'+{phone.lstrip("+")}'
+    
+    # Get latest pending confirmation that hasn't expired
+    now = datetime.utcnow()
+    pending = PendingConfirmation.objects(
+        phone=phone,
+        status='pending',
+        expires_at__gt=now
+    ).order_by('-created_at').first()
+    
+    if pending:
+        logger.info(f"Found pending confirmation for phone {phone}: {pending.id}")
+    else:
+        logger.debug(f"No pending confirmation found for phone {phone}")
+    
+    return pending
+
+
+def update_pending_confirmation_status(confirmation_id, status):
+    """
+    Update pending confirmation status
+    
+    Args:
+        confirmation_id: PendingConfirmation ID (string or ObjectId)
+        status: New status ('pending', 'confirmed', 'rejected', 'expired')
+    
+    Returns:
+        PendingConfirmation: Updated pending confirmation object
+    """
+    try:
+        from bson.errors import InvalidId
+        confirmation = PendingConfirmation.objects.get(id=confirmation_id)
+    except (PendingConfirmation.DoesNotExist, InvalidId):
+        raise NotFoundError(f"Pending confirmation {confirmation_id} not found")
+    
+    if status not in PendingConfirmation.STATUS_CHOICES:
+        raise ValidationError(f"Invalid status: {status}. Must be one of {PendingConfirmation.STATUS_CHOICES}")
+    
+    confirmation.status = status
+    confirmation.save()
+    
+    logger.info(f"Updated pending confirmation {confirmation_id} status to {status}")
+    
+    return confirmation
+
+
+def expire_old_confirmations():
+    """
+    Mark expired pending confirmations as expired
+    
+    Returns:
+        int: Number of confirmations expired
+    """
+    now = datetime.utcnow()
+    
+    expired = PendingConfirmation.objects(
+        status='pending',
+        expires_at__lte=now
+    ).update(set__status='expired')
+    
+    if expired > 0:
+        logger.info(f"Expired {expired} old pending confirmations")
+    
+    return expired
 

@@ -1,13 +1,8 @@
 """
 Flask API application package
-Exports create_app from database module
 """
-from database import create_app
-
-__all__ = ['create_app']
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flask_session import Session
 from mongoengine import connect, disconnect
 import logging
 from config import config
@@ -36,9 +31,6 @@ def create_app(config_name='default'):
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
     
-    # Configure Flask sessions
-    Session(app)
-    
     # Initialize CORS
     CORS(app, origins=app.config['CORS_ORIGINS'], supports_credentials=True)
     
@@ -61,6 +53,31 @@ def create_app(config_name='default'):
     # Register error handlers
     from api.middleware.error_handler import register_error_handlers
     register_error_handlers(app)
+    
+    # Root endpoint
+    @app.route('/', methods=['GET'])
+    def root():
+        """Root endpoint"""
+        return jsonify({
+            'message': 'KiranaChain API',
+            'version': '1.0.0',
+            'status': 'running',
+            'endpoints': {
+                'health': '/health',
+                'api': '/api'
+            }
+        })
+    
+    # Health check endpoint
+    @app.route('/health', methods=['GET'])
+    def health():
+        """Health check endpoint"""
+        return jsonify({
+            'status': 'healthy',
+            'service': 'KiranaChain API',
+            'version': '1.0.0',
+            'database': 'connected'
+        })
     
     # Request logging middleware
     @app.before_request

@@ -10,6 +10,10 @@ from .transaction_service import (
     update_transaction_with_customer_confirmation,
     validate_transaction,
     aggregate_daily_sales,
+    create_pending_confirmation,
+    get_pending_confirmation_by_phone,
+    update_pending_confirmation_status,
+    expire_old_confirmations
     get_blockchain_service
 )
 
@@ -22,6 +26,10 @@ __all__ = [
     'update_transaction_with_customer_confirmation',
     'validate_transaction',
     'aggregate_daily_sales',
+    'create_pending_confirmation',
+    'get_pending_confirmation_by_phone',
+    'update_pending_confirmation_status',
+    'expire_old_confirmations'
     'get_blockchain_service'
 ]
 
