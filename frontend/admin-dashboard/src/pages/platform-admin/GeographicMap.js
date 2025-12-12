@@ -43,7 +43,7 @@ const MapCenterUpdater = ({ center }) => {
 };
 
 const GeographicMap = () => {
-  const [members, setMembers] = useState([]);
+  const [stores, setStores] = useState([]);
   const [serviceArea, setServiceArea] = useState({
     center: [28.6139, 77.2090], // Default: Delhi
     radius: 5000, // 5km radius
@@ -52,10 +52,8 @@ const GeographicMap = () => {
     scoreRange: 'all',
     showServiceArea: true,
   });
-  const [selectedMember, setSelectedMember] = useState(null);
+  const [selectedStore, setSelectedStore] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  const cooperativeId = 'coop-001';
 
   useEffect(() => {
     loadMapData();
@@ -65,26 +63,39 @@ const GeographicMap = () => {
     try {
       setLoading(true);
       
-      const mapData = await apiService.getCooperativeMapData(cooperativeId);
+      const data = await apiService.getStores();
+      const storesList = data.stores || data.data || data || [];
       
-      if (mapData.members && mapData.members.length > 0) {
-        setMembers(mapData.members);
-        
-        // Calculate center based on members
-        const avgLat = mapData.members.reduce((sum, m) => sum + (m.latitude || 0), 0) / mapData.members.length;
-        const avgLng = mapData.members.reduce((sum, m) => sum + (m.longitude || 0), 0) / mapData.members.length;
+      // Map store data to include location info
+      const mappedStores = storesList.map(store => ({
+        id: store.id || store._id,
+        name: store.name,
+        address: store.address,
+        credit_score: store.credit_score || 0,
+        latitude: store.location?.latitude || store.latitude,
+        longitude: store.location?.longitude || store.longitude,
+        is_active: store.is_active,
+        total_sales: store.total_sales_30d || 0,
+      })).filter(store => store.latitude && store.longitude);
+      
+      setStores(mappedStores);
+      
+      // Calculate center based on stores with valid coordinates
+      if (mappedStores.length > 0) {
+        const avgLat = mappedStores.reduce((sum, s) => sum + (s.latitude || 0), 0) / mappedStores.length;
+        const avgLng = mappedStores.reduce((sum, s) => sum + (s.longitude || 0), 0) / mappedStores.length;
         
         if (avgLat && avgLng) {
           setServiceArea({
             center: [avgLat, avgLng],
-            radius: mapData.service_radius || 5000,
+            radius: 5000,
           });
         }
       }
     } catch (error) {
       console.error('Error loading map data:', error);
       // Set mock data for demonstration
-      const mockMembers = [
+      const mockStores = [
         { id: 1, name: 'Krishna General Store', latitude: 28.6280, longitude: 77.2190, credit_score: 845, address: 'Connaught Place, Delhi' },
         { id: 2, name: 'Gupta Provisions', latitude: 28.6150, longitude: 77.2300, credit_score: 720, address: 'Karol Bagh, Delhi' },
         { id: 3, name: 'Sharma Kirana', latitude: 28.6350, longitude: 77.2050, credit_score: 680, address: 'Rajouri Garden, Delhi' },
@@ -94,17 +105,17 @@ const GeographicMap = () => {
         { id: 7, name: 'Mehta Supermart', latitude: 28.5950, longitude: 77.2350, credit_score: 650, address: 'Greater Kailash, Delhi' },
         { id: 8, name: 'Kumar Store', latitude: 28.6100, longitude: 77.2000, credit_score: 810, address: 'Janakpuri, Delhi' },
       ];
-      setMembers(mockMembers);
+      setStores(mockStores);
     } finally {
       setLoading(false);
     }
   };
 
-  const getFilteredMembers = () => {
-    if (filters.scoreRange === 'all') return members;
+  const getFilteredStores = () => {
+    if (filters.scoreRange === 'all') return stores;
     
-    return members.filter(member => {
-      const score = member.credit_score || 0;
+    return stores.filter(store => {
+      const score = store.credit_score || 0;
       if (filters.scoreRange === 'high') return score >= 700;
       if (filters.scoreRange === 'medium') return score >= 500 && score < 700;
       if (filters.scoreRange === 'low') return score < 500;
@@ -124,12 +135,12 @@ const GeographicMap = () => {
     return 'Needs Attention';
   };
 
-  const filteredMembers = getFilteredMembers();
+  const filteredStores = getFilteredStores();
 
   const scoreSummary = {
-    high: members.filter(m => (m.credit_score || 0) >= 700).length,
-    medium: members.filter(m => (m.credit_score || 0) >= 500 && (m.credit_score || 0) < 700).length,
-    low: members.filter(m => (m.credit_score || 0) < 500).length,
+    high: stores.filter(s => (s.credit_score || 0) >= 700).length,
+    medium: stores.filter(s => (s.credit_score || 0) >= 500 && (s.credit_score || 0) < 700).length,
+    low: stores.filter(s => (s.credit_score || 0) < 500).length,
   };
 
   if (loading) {
@@ -148,7 +159,13 @@ const GeographicMap = () => {
       <div className="page-header">
         <div className="header-content">
           <h1 className="page-title">Geographic Map</h1>
-          <p className="page-subtitle">Cooperative service area and member locations</p>
+          <p className="page-subtitle">Platform stores and locations</p>
+        </div>
+        <div className="header-badge">
+          <span className="read-only-badge">
+            <span className="badge-icon">🔒</span>
+            Read-Only
+          </span>
         </div>
       </div>
 
@@ -178,7 +195,7 @@ const GeographicMap = () => {
                   checked={filters.showServiceArea}
                   onChange={(e) => setFilters({ ...filters, showServiceArea: e.target.checked })}
                 />
-                <span>Show Service Area</span>
+                <span>Show Coverage Area</span>
               </label>
             </div>
           </div>
@@ -205,30 +222,30 @@ const GeographicMap = () => {
             </div>
           </div>
 
-          {/* Member List */}
-          <div className="members-section">
+          {/* Store List */}
+          <div className="stores-section">
             <h3 className="section-title">
-              Members ({filteredMembers.length})
+              Stores ({filteredStores.length})
             </h3>
-            <div className="member-list">
-              {filteredMembers.map((member) => (
+            <div className="store-list">
+              {filteredStores.map((store) => (
                 <div
-                  key={member.id}
-                  className={`member-item ${selectedMember?.id === member.id ? 'selected' : ''}`}
-                  onClick={() => setSelectedMember(member)}
+                  key={store.id}
+                  className={`store-item ${selectedStore?.id === store.id ? 'selected' : ''}`}
+                  onClick={() => setSelectedStore(store)}
                 >
-                  <div className="member-info">
-                    <span className="member-name">{member.name}</span>
-                    <span className="member-address">{member.address}</span>
+                  <div className="store-info">
+                    <span className="store-name">{store.name}</span>
+                    <span className="store-address">{store.address}</span>
                   </div>
                   <div
-                    className="member-score"
+                    className="store-score"
                     style={{ 
-                      color: getScoreColor(member.credit_score),
-                      background: `${getScoreColor(member.credit_score)}15`
+                      color: getScoreColor(store.credit_score),
+                      background: `${getScoreColor(store.credit_score)}15`
                     }}
                   >
-                    {member.credit_score}
+                    {store.credit_score}
                   </div>
                 </div>
               ))}
@@ -250,14 +267,14 @@ const GeographicMap = () => {
             
             <MapCenterUpdater center={serviceArea.center} />
 
-            {/* Service Area Circle */}
+            {/* Coverage Area Circle */}
             {filters.showServiceArea && (
               <Circle
                 center={serviceArea.center}
                 radius={serviceArea.radius}
                 pathOptions={{
-                  color: '#10b981',
-                  fillColor: '#10b981',
+                  color: '#3b82f6',
+                  fillColor: '#3b82f6',
                   fillOpacity: 0.1,
                   weight: 2,
                   dashArray: '10, 10',
@@ -265,28 +282,28 @@ const GeographicMap = () => {
               />
             )}
 
-            {/* Member Markers */}
-            {filteredMembers.map((member) => (
-              member.latitude && member.longitude && (
+            {/* Store Markers */}
+            {filteredStores.map((store) => (
+              store.latitude && store.longitude && (
                 <Marker
-                  key={member.id}
-                  position={[member.latitude, member.longitude]}
-                  icon={createScoreIcon(member.credit_score || 0)}
+                  key={store.id}
+                  position={[store.latitude, store.longitude]}
+                  icon={createScoreIcon(store.credit_score || 0)}
                   eventHandlers={{
-                    click: () => setSelectedMember(member),
+                    click: () => setSelectedStore(store),
                   }}
                 >
                   <Popup>
                     <div className="marker-popup">
-                      <h4 className="popup-title">{member.name}</h4>
-                      <p className="popup-address">{member.address}</p>
+                      <h4 className="popup-title">{store.name}</h4>
+                      <p className="popup-address">{store.address}</p>
                       <div className="popup-score">
                         <span className="popup-score-label">Vishwas Score:</span>
                         <span 
                           className="popup-score-value"
-                          style={{ color: getScoreColor(member.credit_score) }}
+                          style={{ color: getScoreColor(store.credit_score) }}
                         >
-                          {member.credit_score} ({getScoreLabel(member.credit_score)})
+                          {store.credit_score} ({getScoreLabel(store.credit_score)})
                         </span>
                       </div>
                     </div>
@@ -298,31 +315,31 @@ const GeographicMap = () => {
         </div>
       </div>
 
-      {/* Selected Member Detail */}
-      {selectedMember && (
-        <div className="member-detail-panel">
+      {/* Selected Store Detail */}
+      {selectedStore && (
+        <div className="store-detail-panel">
           <div className="detail-header">
-            <h3>{selectedMember.name}</h3>
-            <button className="close-btn" onClick={() => setSelectedMember(null)}>×</button>
+            <h3>{selectedStore.name}</h3>
+            <button className="close-btn" onClick={() => setSelectedStore(null)}>×</button>
           </div>
           <div className="detail-content">
             <div className="detail-row">
               <span className="detail-label">Address</span>
-              <span className="detail-value">{selectedMember.address}</span>
+              <span className="detail-value">{selectedStore.address}</span>
             </div>
             <div className="detail-row">
               <span className="detail-label">Vishwas Score</span>
               <span 
                 className="detail-value score"
-                style={{ color: getScoreColor(selectedMember.credit_score) }}
+                style={{ color: getScoreColor(selectedStore.credit_score) }}
               >
-                {selectedMember.credit_score} ({getScoreLabel(selectedMember.credit_score)})
+                {selectedStore.credit_score} ({getScoreLabel(selectedStore.credit_score)})
               </span>
             </div>
             <div className="detail-row">
               <span className="detail-label">Coordinates</span>
               <span className="detail-value coords">
-                {selectedMember.latitude?.toFixed(4)}, {selectedMember.longitude?.toFixed(4)}
+                {selectedStore.latitude?.toFixed(4)}, {selectedStore.longitude?.toFixed(4)}
               </span>
             </div>
           </div>
