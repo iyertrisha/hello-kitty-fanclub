@@ -17,20 +17,31 @@ BlockchainService = None
 BlockchainConfig = None
 
 try:
+    # Ensure .env is loaded from backend directory before importing blockchain config
+    from dotenv import load_dotenv
+    backend_dir = Path(__file__).parent.parent.parent
+    env_path = backend_dir / '.env'
+    if env_path.exists():
+        load_dotenv(dotenv_path=env_path)
+        logger.info(f"Loaded .env from {env_path}")
+    
     # Add blockchain directory to path
-    blockchain_path = Path(__file__).parent.parent.parent / 'blockchain'
+    blockchain_path = backend_dir / 'blockchain'
     sys.path.insert(0, str(blockchain_path))
     
     # Import from blockchain module
     from utils.contract_service import BlockchainService
     from config import BlockchainConfig
     
+    # Reload .env to ensure blockchain config gets the values
+    load_dotenv(dotenv_path=env_path)
+    
     # Check if blockchain is properly configured
     if BlockchainConfig.CONTRACT_ADDRESS and BlockchainConfig.PRIVATE_KEY:
         BLOCKCHAIN_AVAILABLE = True
-        logger.info("Blockchain service loaded successfully")
+        logger.info(f"Blockchain service loaded successfully (Contract: {BlockchainConfig.CONTRACT_ADDRESS[:10]}..., RPC: {BlockchainConfig.RPC_URL})")
     else:
-        logger.warning("Blockchain service loaded but not configured (missing CONTRACT_ADDRESS or PRIVATE_KEY)")
+        logger.warning(f"Blockchain service loaded but not configured (CONTRACT_ADDRESS: {bool(BlockchainConfig.CONTRACT_ADDRESS)}, PRIVATE_KEY: {bool(BlockchainConfig.PRIVATE_KEY)})")
         BLOCKCHAIN_AVAILABLE = False
 except ImportError as e:
     logger.warning(f"Blockchain service not available: {e}")

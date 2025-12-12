@@ -260,3 +260,49 @@ def register_shopkeeper(data):
     
     return shopkeeper
 
+
+def delete_shopkeeper(shopkeeper_id):
+    """
+    Delete a shopkeeper (soft delete by setting is_active=False, or hard delete)
+    
+    Args:
+        shopkeeper_id: Shopkeeper ID
+    
+    Returns:
+        bool: True if deleted successfully
+    """
+    try:
+        shopkeeper = Shopkeeper.objects.get(id=shopkeeper_id)
+    except Shopkeeper.DoesNotExist:
+        raise NotFoundError(f"Shopkeeper {shopkeeper_id} not found")
+    
+    # Hard delete - remove from database
+    shopkeeper.delete()
+    
+    logger.info(f"Deleted shopkeeper {shopkeeper_id}")
+    
+    return True
+
+
+def toggle_shopkeeper_status(shopkeeper_id):
+    """
+    Toggle shopkeeper active/inactive status
+    
+    Args:
+        shopkeeper_id: Shopkeeper ID
+    
+    Returns:
+        Shopkeeper: Updated shopkeeper object
+    """
+    try:
+        shopkeeper = Shopkeeper.objects.get(id=shopkeeper_id)
+    except Shopkeeper.DoesNotExist:
+        raise NotFoundError(f"Shopkeeper {shopkeeper_id} not found")
+    
+    shopkeeper.is_active = not shopkeeper.is_active
+    shopkeeper.save()
+    
+    logger.info(f"Toggled shopkeeper {shopkeeper_id} to {'active' if shopkeeper.is_active else 'inactive'}")
+    
+    return shopkeeper
+

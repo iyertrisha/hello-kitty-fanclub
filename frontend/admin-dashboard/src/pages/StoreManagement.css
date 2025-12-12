@@ -41,3 +41,180 @@
   font-size: 16px;
 }
 
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content.view-modal {
+  max-width: 600px;
+}
+
+.modal-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 20px 0;
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.modal-input {
+  padding: 12px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.modal-input:focus {
+  outline: none;
+  border-color: #007aff;
+}
+
+.modal-input:disabled {
+  background: #f5f5f5;
+  color: #999;
+}
+
+.wallet-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.wallet-input-group .modal-input {
+  flex: 1;
+}
+
+.generate-wallet-btn {
+  padding: 12px 16px;
+  background: #e3f2fd;
+  color: #1976d2;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.generate-wallet-btn:hover {
+  background: #bbdefb;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.modal-button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.modal-button:hover {
+  opacity: 0.9;
+}
+
+.modal-button.cancel {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.modal-button.primary {
+  background: #007aff;
+  color: #ffffff;
+}
+
+/* Store Details (View Modal) */
+.store-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #666;
+}
+
+.detail-value {
+  color: #333;
+  text-align: right;
+}
+
+.detail-value.wallet {
+  font-family: monospace;
+  font-size: 12px;
+  word-break: break-all;
+  max-width: 300px;
+}
+
+.detail-value.status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.detail-value.status-badge.active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.detail-value.status-badge.inactive {
+  background: #ffebee;
+  color: #c62828;
+}
+

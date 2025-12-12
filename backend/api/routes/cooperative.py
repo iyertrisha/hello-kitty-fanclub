@@ -7,7 +7,9 @@ from services.cooperative import (
     create_cooperative,
     join_cooperative,
     get_cooperative_members,
-    create_bulk_order
+    create_bulk_order,
+    delete_cooperative,
+    update_cooperative
 )
 from database.models import BulkOrder
 from api.middleware.validation import validate_request
@@ -46,6 +48,60 @@ def get_cooperative_route(coop_id):
     except Exception as e:
         logger.error(f"Error getting cooperative: {e}", exc_info=True)
         raise ValidationError(f"Failed to get cooperative: {str(e)}")
+
+
+@cooperative_bp.route('/<coop_id>', methods=['PUT'])
+@validate_request()
+def update_cooperative_route(coop_id):
+    """Update cooperative"""
+    try:
+        # Validate ObjectId format
+        from bson.errors import InvalidId
+        from bson import ObjectId
+        try:
+            ObjectId(coop_id)
+        except InvalidId:
+            raise ValidationError(f"Invalid cooperative ID format: {coop_id}")
+        
+        data = request.validated_data
+        cooperative = update_cooperative(coop_id, data)
+        
+        return jsonify({
+            'success': True,
+            'id': str(cooperative.id),
+            'name': cooperative.name,
+            'revenue_split_percent': cooperative.revenue_split_percent
+        }), 200
+    except NotFoundError:
+        raise
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating cooperative: {e}", exc_info=True)
+        raise ValidationError(f"Failed to update cooperative: {str(e)}")
+
+
+@cooperative_bp.route('/<coop_id>', methods=['DELETE'])
+def delete_cooperative_route(coop_id):
+    """Delete cooperative"""
+    try:
+        # Validate ObjectId format
+        from bson.errors import InvalidId
+        from bson import ObjectId
+        try:
+            ObjectId(coop_id)
+        except InvalidId:
+            raise ValidationError(f"Invalid cooperative ID format: {coop_id}")
+        
+        delete_cooperative(coop_id)
+        return jsonify({'success': True, 'message': 'Cooperative deleted successfully'}), 200
+    except NotFoundError:
+        raise
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting cooperative: {e}", exc_info=True)
+        raise ValidationError(f"Failed to delete cooperative: {str(e)}")
 
 
 @cooperative_bp.route('/<coop_id>/join', methods=['POST'])
