@@ -211,7 +211,7 @@ def record_debt_entry(customer_id=None, phone=None, shopkeeper_id=None, amount=N
             # Continue without blockchain - don't fail the transaction
     
     # Get updated customer balance
-    customer.refresh_from_db()
+    customer.reload()
     
     return {
         'transaction_id': str(transaction.id),
@@ -324,7 +324,7 @@ def record_payment(customer_id=None, phone=None, amount=None):
             # Continue without blockchain
     
     # Get updated customer balance
-    customer.refresh_from_db()
+    customer.reload()
     
     return {
         'transaction_id': str(transaction.id),
@@ -374,6 +374,77 @@ def get_customers_for_reminder(days_overdue=0):
             })
     
     return result
+
+
+def get_first_debt_date(customer_id):
+    """
+    Get date of first debt transaction
+    
+    Args:
+        customer_id: Customer ID
+        
+    Returns:
+        datetime: First debt date or None
+    """
+    try:
+        customer = Customer.objects.get(id=customer_id)
+    except Customer.DoesNotExist:
+        return None
+    
+    # Get first credit transaction
+    first_credit = Transaction.objects(
+        customer_id=customer,
+        type='credit'
+    ).order_by('timestamp').first()
+    
+    if first_credit:
+        return first_credit.timestamp
+    
+    return None
+
+
+def get_debt_statistics(customer_id):
+    """
+    Get debt statistics for a customer
+    
+    Args:
+        customer_id: Customer ID
+        
+    Returns:
+        dict: {
+            'total_transactions': int,
+            'credit_count': int,
+            'payment_count': int,
+            'last_payment_date': datetime or None,
+            'last_credit_date': datetime or None
+        }
+    """
+    try:
+        customer = Customer.objects.get(id=customer_id)
+    except Customer.DoesNotExist:
+        return {
+            'total_transactions': 0,
+            'credit_count': 0,
+            'payment_count': 0,
+            'last_payment_date': None,
+            'last_credit_date': None
+        }
+    
+    transactions = Transaction.objects(customer_id=customer)
+    
+    credit_txs = transactions.filter(type='credit').order_by('-timestamp')
+    payment_txs = transactions.filter(type='repay').order_by('-timestamp')
+    
+    last_payment = payment_txs.first()
+    last_credit = credit_txs.first()
+    
+    return {
+        'total_transactions': transactions.count(),
+        'credit_count': credit_txs.count(),
+        'payment_count': payment_txs.count(),
+        'last_payment_date': last_payment.timestamp if last_payment else None,
+        'last_credit_date': last_credit.timestamp if last_credit else None
+    }
 
 
 def format_debt_summary(customer_id):

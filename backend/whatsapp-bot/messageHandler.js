@@ -6,6 +6,8 @@ const config = require('./config');
 const debtQueryHandler = require('./handlers/debtQuery');
 const debtRecordHandler = require('./handlers/debtRecord');
 const paymentHandler = require('./handlers/payment');
+const menuState = require('./utils/menuState');
+const menuRenderer = require('./utils/menuRenderer');
 
 // Message deduplication
 const processedMessages = new Set();
@@ -46,6 +48,11 @@ function normalizePhone(phone) {
 function detectIntent(text) {
   const lowerText = text.toLowerCase().trim();
   
+  // Skip intent detection for single digits (these are menu selections)
+  if (/^\d$/.test(lowerText)) {
+    return 'unknown';
+  }
+  
   // Debt query keywords
   if (lowerText.match(/\b(balance|owe|debt|outstanding|due|how much)\b/)) {
     return 'debt_query';
@@ -56,9 +63,10 @@ function detectIntent(text) {
     return 'payment';
   }
   
-  // Debt recording - check for numbers/amounts
+  // Debt recording - check for numbers/amounts with context
+  // Require currency symbols or keywords along with numbers
   if (lowerText.match(/\b(₹|rs|rupees?|bought|purchase|credit)\b/i) || 
-      lowerText.match(/\d+/)) {
+      (lowerText.match(/\d+/) && lowerText.match(/\b(₹|rs|rupees?|bought|purchase|credit|for|milk|rice|sugar|salt|oil|groceries)\b/i))) {
     return 'debt_record';
   }
   
@@ -96,6 +104,192 @@ function extractAmount(text) {
   }
   
   return null;
+}
+
+/**
+ * Check if text is a menu selection (single digit 0-9)
+ * @param {string} text - Message text
+ * @returns {boolean}
+ */
+function isMenuSelection(text) {
+  const trimmed = text.trim();
+  return /^[0-9]$/.test(trimmed);
+}
+
+/**
+ * Check if current state expects context input
+ * @param {object} state - Menu state
+ * @returns {boolean}
+ */
+function isContextInput(state) {
+  return state.currentMenu === 'grocery_list_input' || 
+         state.currentMenu === 'grocery_confirm' ||
+         state.currentMenu === 'debt_record_input' ||
+         state.currentMenu === 'payment_input';
+}
+
+/**
+ * Handle menu selection
+ * @param {object} client - WhatsApp client
+ * @param {object} message - Message object
+ * @param {string} phone - Normalized phone
+ * @param {string} selection - Selected option
+ * @param {object} state - Current menu state
+ */
+async function handleMenuSelection(client, message, phone, selection, state) {
+  const selectionNum = parseInt(selection);
+  
+  // Import handlers dynamically to avoid circular dependencies
+  const groceryOrderHandler = require('./handlers/groceryOrder');
+  const debtManagementHandler = require('./handlers/debtManagement');
+  const productCatalogHandler = require('./handlers/productCatalog');
+  const noticeboardHandler = require('./handlers/noticeboard');
+  
+  try {
+    switch (state.currentMenu) {
+      case 'main':
+        if (selectionNum === 1) {
+          // Order Groceries
+          menuState.setState(phone, 'grocery_list_input');
+          await groceryOrderHandler.handleGroceryMenu(client, message, phone, selectionNum);
+        } else if (selectionNum === 2) {
+          // Debt Management
+          menuState.setState(phone, 'debt_management');
+          await client.sendMessage(message.from, menuRenderer.renderDebtManagementMenu());
+        } else if (selectionNum === 3) {
+          // More Details
+          menuState.setState(phone, 'more_details');
+          await client.sendMessage(message.from, menuRenderer.renderMoreDetailsMenu());
+        } else {
+          await client.sendMessage(message.from, 
+            menuRenderer.renderError('Invalid selection. Please choose 1, 2, or 3.') + '\n\n' + 
+            menuRenderer.renderMainMenu()
+          );
+        }
+        break;
+        
+      case 'debt_management':
+        await debtManagementHandler.handleDebtMenu(client, message, phone, selectionNum);
+        break;
+        
+      case 'more_details':
+        if (selectionNum === 1) {
+          // Product Catalog
+          menuState.setState(phone, 'product_catalog');
+          await productCatalogHandler.handleCatalogMenu(client, message, phone, selectionNum);
+        } else if (selectionNum === 2) {
+          // Noticeboard
+          menuState.setState(phone, 'noticeboard');
+          await noticeboardHandler.handleNoticeboardMenu(client, message, phone);
+        } else if (selectionNum === 3) {
+          // Back to Main Menu
+          menuState.setState(phone, 'main');
+          await client.sendMessage(message.from, menuRenderer.renderMainMenu());
+        } else {
+          await client.sendMessage(message.from, 
+            menuRenderer.renderError('Invalid selection. Please choose 1-3.') + '\n\n' + 
+            menuRenderer.renderMoreDetailsMenu()
+          );
+        }
+        break;
+        
+      default:
+        await client.sendMessage(message.from, 
+          menuRenderer.renderError('Invalid menu state.') + '\n\n' + 
+          menuRenderer.renderMainMenu()
+        );
+        menuState.clearState(phone);
+    }
+  } catch (error) {
+    console.error('Error handling menu selection:', error);
+    await client.sendMessage(message.from, 
+      menuRenderer.renderError('An error occurred. Please try again.') + '\n\n' + 
+      menuRenderer.renderMainMenu()
+    );
+    menuState.clearState(phone);
+  }
+}
+
+/**
+ * Handle context input (grocery list, confirmations, etc.)
+ * @param {object} client - WhatsApp client
+ * @param {object} message - Message object
+ * @param {string} phone - Normalized phone
+ * @param {string} text - Input text
+ * @param {object} state - Current menu state
+ */
+async function handleContextInput(client, message, phone, text, state) {
+  const groceryOrderHandler = require('./handlers/groceryOrder');
+  const debtRecordHandler = require('./handlers/debtRecord');
+  const paymentHandler = require('./handlers/payment');
+  const lowerText = text.toLowerCase().trim();
+  
+  // Handle cancel/back
+  if (lowerText === 'cancel' || lowerText === 'back' || lowerText === '0') {
+    if (state.currentMenu === 'debt_management') {
+      menuState.setState(phone, 'debt_management');
+      await client.sendMessage(message.from, menuRenderer.renderDebtManagementMenu());
+    } else {
+      menuState.clearState(phone);
+      await client.sendMessage(message.from, menuRenderer.renderMainMenu());
+    }
+    return;
+  }
+  
+  try {
+    if (state.currentMenu === 'grocery_list_input') {
+      await groceryOrderHandler.handleGroceryList(client, message, phone, text);
+    } else if (state.currentMenu === 'grocery_confirm') {
+      await groceryOrderHandler.handleGroceryConfirm(client, message, phone, text);
+    } else if (state.currentMenu === 'debt_record_input') {
+      // Handle debt record input
+      const amount = extractAmount(text);
+      if (amount) {
+        await debtRecordHandler.handle(client, message, phone, amount, text, config);
+        // Return to debt management menu after recording debt
+        setTimeout(async () => {
+          menuState.setState(phone, 'debt_management');
+          await client.sendMessage(message.from, 
+            '\n' + menuRenderer.renderDebtManagementMenu()
+          );
+        }, 2000);
+      } else {
+        await client.sendMessage(message.from, 
+          'I couldn\'t find an amount in your message. Please send something like "Bought milk for ₹120" or "Credit ₹500".\n\n' +
+          'Reply "cancel" to go back.'
+        );
+      }
+    } else if (state.currentMenu === 'payment_input') {
+      // Handle payment input
+      const paymentAmount = extractAmount(text);
+      if (paymentAmount) {
+        await paymentHandler.handle(client, message, phone, paymentAmount, config);
+        // Return to debt management menu after payment
+        setTimeout(async () => {
+          menuState.setState(phone, 'debt_management');
+          await client.sendMessage(message.from, 
+            '\n' + menuRenderer.renderDebtManagementMenu()
+          );
+        }, 2000);
+      } else {
+        await client.sendMessage(message.from, 
+          'I couldn\'t find an amount in your message. Please send something like "Paid ₹500" or "Payment ₹1000".\n\n' +
+          'Reply "cancel" to go back.'
+        );
+      }
+    } else {
+      // Unknown context - return to main menu
+      menuState.clearState(phone);
+      await client.sendMessage(message.from, menuRenderer.renderMainMenu());
+    }
+  } catch (error) {
+    console.error('Error handling context input:', error);
+    await client.sendMessage(message.from, 
+      menuRenderer.renderError('An error occurred. Please try again.') + '\n\n' + 
+      menuRenderer.renderMainMenu()
+    );
+    menuState.clearState(phone);
+  }
 }
 
 /**
@@ -155,7 +349,7 @@ async function handleMessage(client, message, config) {
   
   // Improved logging with full message content
   console.log(`📨 Message from ${phone}: "${text}"`);
-  
+
   // Handle media messages (photos) - future enhancement
   if (hasMedia) {
     await client.sendMessage(message.from, 
@@ -163,22 +357,72 @@ async function handleMessage(client, message, config) {
     );
     return;
   }
+
+  // Check for menu navigation commands
+  const lowerText = text.toLowerCase().trim();
+  if (lowerText === 'menu' || lowerText === 'start' || lowerText === 'help') {
+    menuState.setState(phone, 'main');
+    await client.sendMessage(message.from, menuRenderer.renderMainMenu());
+    return;
+  }
+
+  // Check if user is in menu state
+  if (menuState.isInMenuState(phone)) {
+    const state = menuState.getState(phone);
+    console.log(`📋 User ${phone} is in menu state: ${state.currentMenu}`);
+    
+    // Handle back/cancel commands
+    if (lowerText === 'back' || lowerText === 'cancel' || lowerText === '0') {
+      if (state.currentMenu === 'main') {
+        await client.sendMessage(message.from, menuRenderer.renderMainMenu());
+      } else {
+        menuState.setState(phone, 'main');
+        await client.sendMessage(message.from, menuRenderer.renderMainMenu());
+      }
+      return;
+    }
+    
+    // Handle menu selection (numbers)
+    if (isMenuSelection(text)) {
+      console.log(`🔢 Menu selection detected: "${text}" in menu "${state.currentMenu}"`);
+      await handleMenuSelection(client, message, phone, text, state);
+      return;
+    }
+    
+    // Handle context input (e.g., grocery list, confirmation)
+    if (isContextInput(state)) {
+      await handleContextInput(client, message, phone, text, state);
+      return;
+    }
+    
+    // Invalid input in menu state - show menu again
+    await client.sendMessage(message.from, 
+      menuRenderer.renderError('Invalid selection. Please choose a valid option.') + '\n\n' + 
+      menuRenderer.renderSubMenu(state.currentMenu)
+    );
+    return;
+  }
   
-  // Detect intent
+  // If not in menu state but user sends a single digit, show main menu
+  if (isMenuSelection(text)) {
+    console.log(`🔢 Single digit "${text}" detected but not in menu state. Showing main menu.`);
+    menuState.setState(phone, 'main');
+    await client.sendMessage(message.from, menuRenderer.renderMainMenu());
+    return;
+  }
+
+  // Detect intent for non-menu interactions
   const intent = detectIntent(text);
   console.log(`🎯 Detected intent: ${intent}`);
   
   // Route to appropriate handler
   switch (intent) {
     case 'greeting':
-      await client.sendMessage(message.from, 
-        '👋 Hello! I\'m your KiranaChain debt tracking assistant.\n\n' +
-        'You can:\n' +
-        '• Ask "How much do I owe?" to check your balance\n' +
-        '• Send "Bought milk for ₹120" to record a debt\n' +
-        '• Send "Paid ₹500" to record a payment\n\n' +
-        'How can I help you today?'
-      );
+      console.log(`👋 Greeting detected for ${phone}, setting menu state to 'main'`);
+      menuState.setState(phone, 'main');
+      const stateAfterGreeting = menuState.getState(phone);
+      console.log(`✅ Menu state set:`, stateAfterGreeting);
+      await client.sendMessage(message.from, menuRenderer.renderMainMenu());
       break;
       
     case 'debt_query':

@@ -32,10 +32,10 @@ async function handle(client, message, phone, config) {
       
       // Format response message
       let reply = `💰 *Your Debt Summary*\n\n`;
-      reply += `Total Outstanding: *₹${summary.total_debt.toFixed(2)}*\n`;
+      reply += `Total Outstanding: ₹${summary.total_debt.toFixed(2)}\n`;
       
       if (summary.recent_transactions && summary.recent_transactions.length > 0) {
-        reply += `\n*Recent Transactions:*\n`;
+        reply += `\nRecent Transactions:\n`;
         summary.recent_transactions.slice(0, 5).forEach(tx => {
           const date = new Date(tx.timestamp).toLocaleDateString('en-IN');
           const type = tx.type === 'credit' ? '➕' : '➖';

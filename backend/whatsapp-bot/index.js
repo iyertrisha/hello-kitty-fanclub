@@ -9,6 +9,7 @@ const path = require('path');
 const config = require('./config');
 const messageHandler = require('./messageHandler');
 const reminderScheduler = require('./reminderScheduler');
+const menuState = require('./utils/menuState');
 
 // Initialize WhatsApp client with improved error handling
 const client = new Client({
@@ -68,6 +69,10 @@ client.on('qr', (qr) => {
 client.on('ready', () => {
   console.log('✅ WhatsApp Bot is ready!');
   console.log(`📡 Connected to Flask API: ${config.flaskApiUrl}`);
+  
+  // Initialize menu state cleanup
+  menuState.cleanup();
+  console.log('✅ Menu state manager initialized');
   
   // Start reminder scheduler
   reminderScheduler.start(client, config);

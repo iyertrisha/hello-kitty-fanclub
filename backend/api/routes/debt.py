@@ -8,6 +8,10 @@ from services.debt import (
     record_payment,
     get_customers_for_reminder
 )
+from services.debt.weekly_reminder_service import (
+    get_customers_for_weekly_reminder,
+    format_weekly_reminder
+)
 from api.middleware.validation import validate_request
 from api.middleware.error_handler import ValidationError, NotFoundError
 from database.models import Shopkeeper
@@ -181,4 +185,28 @@ def send_reminder_route():
     except Exception as e:
         logger.error(f"Error sending reminder: {e}", exc_info=True)
         raise ValidationError(f"Failed to send reminder: {str(e)}")
+
+
+@debt_bp.route('/weekly-reminders', methods=['GET'])
+def get_weekly_reminders_route():
+    """
+    Get customers for weekly reminders
+    
+    Query params: days_threshold (optional, default: 7)
+    Returns: {
+        "customers": [{"phone": str, "debt": float, "days_since_first": int, "history": dict}]
+    }
+    """
+    try:
+        days_threshold = int(request.args.get('days_threshold', 7))
+        
+        customers = get_customers_for_weekly_reminder(days_threshold=days_threshold)
+        
+        return jsonify({
+            'customers': customers,
+            'count': len(customers)
+        }), 200
+    except Exception as e:
+        logger.error(f"Error getting weekly reminders: {e}", exc_info=True)
+        raise ValidationError(f"Failed to get weekly reminders: {str(e)}")
 

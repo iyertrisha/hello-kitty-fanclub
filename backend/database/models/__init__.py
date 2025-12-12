@@ -22,6 +22,7 @@ Product = _models_module.Product
 Location = _models_module.Location
 BulkOrder = _models_module.BulkOrder
 PendingConfirmation = _models_module.PendingConfirmation
+Notice = _models_module.Notice
 
 __all__ = [
     'Shopkeeper',
@@ -31,6 +32,7 @@ __all__ = [
     'Product',
     'Location',
     'BulkOrder',
-    'PendingConfirmation'
+    'PendingConfirmation',
+    'Notice'
 ]
 

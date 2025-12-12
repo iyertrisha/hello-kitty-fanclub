@@ -36,9 +36,9 @@ async function handle(client, message, phone, amount, config) {
       
       // Format confirmation message
       let reply = `✅ *Payment Recorded*\n\n`;
-      reply += `Amount Paid: ₹${amount.toFixed(2)}\n`;
+      reply += `Amount: ₹${amount.toFixed(2)}\n`;
       reply += `Previous Balance: ₹${result.previous_balance.toFixed(2)}\n`;
-      reply += `New Balance: *₹${result.new_balance.toFixed(2)}*\n`;
+      reply += `New Balance: ₹${result.new_balance.toFixed(2)}\n`;
       
       if (result.new_balance === 0) {
         reply += `\n🎉 Your account is now fully paid!`;

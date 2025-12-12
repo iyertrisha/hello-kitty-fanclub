@@ -16,6 +16,8 @@ def register_blueprints(app):
     from api.routes.admin import admin_bp
     from api.routes.whatsapp import whatsapp_bp
     from api.routes.debt import debt_bp
+    from api.routes.grocery import grocery_bp
+    from api.routes.noticeboard import noticeboard_bp
     
     # Register blueprints
     app.register_blueprint(transactions_bp, url_prefix='/api/transactions')
@@ -26,4 +28,6 @@ def register_blueprints(app):
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     app.register_blueprint(whatsapp_bp, url_prefix='/api/whatsapp')
     app.register_blueprint(debt_bp, url_prefix='/api/debt')
+    app.register_blueprint(grocery_bp, url_prefix='/api/grocery')
+    app.register_blueprint(noticeboard_bp, url_prefix='/api/noticeboard')
 

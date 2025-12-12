@@ -53,7 +53,7 @@ async function handle(client, message, phone, amount, description, config) {
       let reply = `✅ *Debt Recorded*\n\n`;
       reply += `Amount: ₹${amount.toFixed(2)}\n`;
       reply += `Description: ${cleanDescription}\n`;
-      reply += `New Balance: *₹${result.new_balance.toFixed(2)}*\n`;
+      reply += `New Balance: ₹${result.new_balance.toFixed(2)}\n`;
       
       if (result.blockchain_tx_id) {
         reply += `\n🔗 Blockchain: ${result.blockchain_tx_id.substring(0, 20)}...`;
