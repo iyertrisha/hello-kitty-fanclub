@@ -193,6 +193,30 @@ const InventoryScreen = () => {
         </TouchableOpacity>
       </View>
 
+      {/* Inventory Stats */}
+      {inventory.length > 0 && (
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>{inventory.length}</Text>
+            <Text style={styles.statLabel}>Total Products</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>
+              {inventory.filter((p) => p.stock_quantity < 10).length}
+            </Text>
+            <Text style={styles.statLabel}>Low Stock</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>
+              ₹{inventory
+                .reduce((sum, p) => sum + p.price * p.stock_quantity, 0)
+                .toLocaleString()}
+            </Text>
+            <Text style={styles.statLabel}>Total Value</Text>
+          </View>
+        </View>
+      )}
+
       {/* Search and Filter */}
       <View style={styles.filterContainer}>
         <TextInput
@@ -476,6 +500,32 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    padding: 16,
+    gap: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E0E0E0',
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#007AFF',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
   },
 });
 
