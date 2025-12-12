@@ -28,12 +28,16 @@ const BlockchainLogs = () => {
   const loadBlockchainLogs = async () => {
     try {
       setLoading(true);
-      const data = await apiService.getBlockchainLogs();
+      const data = await apiService.getBlockchainLogs({ page: 1, page_size: 100 });
+      // Backend returns { logs: [...], pagination: {...} }
       const logsList = data.logs || data.data || data || [];
       setLogs(logsList);
       setFilteredLogs(logsList);
     } catch (error) {
       console.error('Error loading blockchain logs:', error);
+      // Set empty array on error to prevent crashes
+      setLogs([]);
+      setFilteredLogs([]);
     } finally {
       setLoading(false);
     }

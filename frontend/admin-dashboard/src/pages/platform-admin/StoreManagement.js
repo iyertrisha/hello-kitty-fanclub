@@ -34,7 +34,7 @@ const StoreManagement = () => {
         ...store,
         status: store.is_active ? 'active' : 'inactive',
         total_sales: store.total_sales_30d || 0,
-        is_flagged: store.is_flagged || false,
+        is_flagged: store.flagged || false,  // Backend returns 'flagged', not 'is_flagged'
         flag_reason: store.flag_reason || '',
       }));
       setStores(mappedStores);
