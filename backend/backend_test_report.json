@@ -1,0 +1,561 @@
+{
+  "test_summary": {
+    "total_tests": 34,
+    "passed": 34,
+    "failed": 0,
+    "success_rate": "100.0%",
+    "average_duration_ms": 2059.62,
+    "test_timestamp": "2025-12-12T14:21:37.107955"
+  },
+  "test_results": [
+    {
+      "endpoint": "/admin/overview",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2133.05,
+      "timestamp": "2025-12-12T14:20:29.195774",
+      "error": null,
+      "response_preview": "{'active_cooperatives': 6, 'cooperatives': {'active': 6, 'total': 6}, 'customers': {'total': 56}, 'recent_activity': [{'message': 'Sale transaction of Rs. 250.75', 'timestamp': '2025-12-12T08:34:15.18"
+    },
+    {
+      "endpoint": "/admin/stores",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2064.03,
+      "timestamp": "2025-12-12T14:20:31.260354",
+      "error": null,
+      "response_preview": "{'pagination': {'page': 1, 'page_size': 20, 'total_count': 14, 'total_pages': 1}, 'stores': [{'address': 'Updated Address', 'credit_score': 587, 'email': 'shop1@example.com', 'id': '693bcb203f14e91254"
+    },
+    {
+      "endpoint": "/admin/cooperatives",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2083.24,
+      "timestamp": "2025-12-12T14:20:33.344143",
+      "error": null,
+      "response_preview": "{'cooperatives': [{'blockchain_coop_id': None, 'created_at': '2025-08-05T07:58:25.223000', 'description': 'Cooperative for Mumbai Central Cooperative', 'id': '693bcb213f14e91254cd297b', 'is_active': T"
+    },
+    {
+      "endpoint": "/admin/analytics",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2137.56,
+      "timestamp": "2025-12-12T14:20:35.482197",
+      "error": null,
+      "response_preview": "{'credit_scores': [{'score': 587, 'shopkeeper_id': '693bcb203f14e91254cd2864', 'shopkeeper_name': 'Updated Shopkeeper Name'}, {'score': 417, 'shopkeeper_id': '693bcb203f14e91254cd2865', 'shopkeeper_na"
+    },
+    {
+      "endpoint": "/admin/blockchain-logs",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2097.19,
+      "timestamp": "2025-12-12T14:20:37.579979",
+      "error": null,
+      "response_preview": "{'logs': [{'amount': 250.75, 'block_number': 1234567, 'blockchain_block_number': 1234567, 'blockchain_tx_id': '0x1234567890abcdef', 'customer_id': '693bcb203f14e91254cd2875', 'id': '693bd16de6492c038b"
+    },
+    {
+      "endpoint": "/transactions",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2070.62,
+      "timestamp": "2025-12-12T14:20:39.651271",
+      "error": null,
+      "response_preview": "{'pagination': {'page': 1, 'page_size': 5, 'total_count': 305, 'total_pages': 61}, 'transactions': [{'amount': 250.75, 'blockchain_tx_id': None, 'customer_id': '693bcb203f14e91254cd2875', 'id': '693bd"
+    },
+    {
+      "endpoint": "/transactions",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2092.63,
+      "timestamp": "2025-12-12T14:20:41.744318",
+      "error": null,
+      "response_preview": "{'pagination': {'page': 1, 'page_size': 3, 'total_count': 100, 'total_pages': 34}, 'transactions': [{'amount': 250.75, 'blockchain_tx_id': None, 'customer_id': '693bcb203f14e91254cd2875', 'id': '693bd"
+    },
+    {
+      "endpoint": "/transactions",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2035.04,
+      "timestamp": "2025-12-12T14:20:43.779725",
+      "error": null,
+      "response_preview": "{'pagination': {'page': 1, 'page_size': 3, 'total_count': 116, 'total_pages': 39}, 'transactions': [{'amount': 250.75, 'blockchain_tx_id': '0x1234567890abcdef', 'customer_id': '693bcb203f14e91254cd287"
+    },
+    {
+      "endpoint": "/transactions/693bd387c3c7b45724998604",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2047.94,
+      "timestamp": "2025-12-12T14:20:45.827957",
+      "error": null,
+      "response_preview": "{'amount': 250.75, 'blockchain_block_number': None, 'blockchain_tx_id': None, 'customer_id': '693bcb203f14e91254cd2875', 'id': '693bd387c3c7b45724998604', 'notes': None, 'product_id': None, 'shopkeepe"
+    },
+    {
+      "endpoint": "/transactions",
+      "method": "POST",
+      "status_code": 201,
+      "success": true,
+      "duration_ms": 2029.36,
+      "timestamp": "2025-12-12T14:20:47.857612",
+      "error": null,
+      "response_preview": "{'amount': 250.75, 'id': '693bd76781ccae9938042291', 'status': 'pending', 'timestamp': '2025-12-12T08:50:47.853230', 'type': 'sale'}"
+    },
+    {
+      "endpoint": "/transactions/693bd387c3c7b45724998604/status",
+      "method": "PUT",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2034.0,
+      "timestamp": "2025-12-12T14:20:49.891901",
+      "error": null,
+      "response_preview": "{'blockchain_tx_id': '0x1234567890abcdef', 'id': '693bd387c3c7b45724998604', 'status': 'verified'}"
+    },
+    {
+      "endpoint": "/shopkeeper/693bcb203f14e91254cd2864",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2061.95,
+      "timestamp": "2025-12-12T14:20:51.954478",
+      "error": null,
+      "response_preview": "{'address': 'Updated Address', 'blockchain_address': '0x1111111111111111111111111111111111111111', 'credit_score': 587, 'email': 'shop1@example.com', 'id': '693bcb203f14e91254cd2864', 'is_active': Tru"
+    },
+    {
+      "endpoint": "/shopkeeper/693bcb203f14e91254cd2864/credit-score",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2038.79,
+      "timestamp": "2025-12-12T14:20:53.993646",
+      "error": null,
+      "response_preview": "{'blockchain_verified': False, 'explanation': 'Credit score calculated from sales volume, repayment history, and transaction consistency', 'factors': {'repayment_history': 280.0735972631721, 'sales_vo"
+    },
+    {
+      "endpoint": "/shopkeeper/693bcb203f14e91254cd2864/inventory",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2032.56,
+      "timestamp": "2025-12-12T14:20:56.026662",
+      "error": null,
+      "response_preview": "{'inventory': [{'category': 'Grains', 'created_at': '2025-12-12T07:58:24.811000', 'description': 'Rice - Grains', 'id': '693bcb203f14e91254cd2885', 'low_stock': False, 'name': 'Rice', 'out_of_stock': "
+    },
+    {
+      "endpoint": "/shopkeeper/register",
+      "method": "POST",
+      "status_code": 201,
+      "success": true,
+      "duration_ms": 2042.42,
+      "timestamp": "2025-12-12T14:20:58.069569",
+      "error": null,
+      "response_preview": "{'id': '693bd77281ccae9938042292', 'name': 'Test Shopkeeper Store', 'registered_at': '2025-12-12T08:50:58.066680', 'wallet_address': '0x51e3c3d11ea83a751a2eabfc2659eec6'}"
+    },
+    {
+      "endpoint": "/shopkeeper/693bcb203f14e91254cd2864",
+      "method": "PUT",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2058.62,
+      "timestamp": "2025-12-12T14:21:00.128489",
+      "error": null,
+      "response_preview": "{'address': 'Updated Address', 'email': 'shop1@example.com', 'id': '693bcb203f14e91254cd2864', 'name': 'Updated Shopkeeper Name', 'phone': '+919876543210'}"
+    },
+    {
+      "endpoint": "/shopkeeper/693bcb203f14e91254cd2864/inventory/693bcb203f14e91254cd2885",
+      "method": "PUT",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2077.22,
+      "timestamp": "2025-12-12T14:21:02.206048",
+      "error": null,
+      "response_preview": "{'id': '693bcb203f14e91254cd2885', 'name': 'Rice', 'price': 55.0, 'stock_quantity': 100}"
+    },
+    {
+      "endpoint": "/customer/693bcb203f14e91254cd2875",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2044.41,
+      "timestamp": "2025-12-12T14:21:04.251089",
+      "error": null,
+      "response_preview": "{'address': '53 Street, City 10', 'created_at': '2025-11-14T07:58:24.774000', 'credit_balance': 0.0, 'id': '693bcb203f14e91254cd2875', 'name': 'Mohan Singh', 'phone': '+919876550209', 'total_credits':"
+    },
+    {
+      "endpoint": "/customer/693bcb203f14e91254cd2875/orders",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2053.44,
+      "timestamp": "2025-12-12T14:21:06.304879",
+      "error": null,
+      "response_preview": "{'orders': [{'amount': 250.75, 'blockchain_tx_id': None, 'id': '693bd76781ccae9938042291', 'product_id': None, 'shopkeeper_id': '693bcb203f14e91254cd2864', 'status': 'pending', 'timestamp': '2025-12-1"
+    },
+    {
+      "endpoint": "/customer/693bcb203f14e91254cd2875/credits",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2061.79,
+      "timestamp": "2025-12-12T14:21:08.367043",
+      "error": null,
+      "response_preview": "{'credits': [{'amount': 369.37, 'blockchain_tx_id': '0x1234567890abcdef', 'id': '693bcb213f14e91254cd2907', 'notes': 'Sample transaction 35', 'shopkeeper_id': '693bcb203f14e91254cd2868', 'status': 've"
+    },
+    {
+      "endpoint": "/customer",
+      "method": "POST",
+      "status_code": 201,
+      "success": true,
+      "duration_ms": 2043.65,
+      "timestamp": "2025-12-12T14:21:10.411043",
+      "error": null,
+      "response_preview": "{'created_at': '2025-12-12T08:51:10.407758', 'id': '693bd77e81ccae9938042293', 'name': 'Test Customer', 'phone': '+9191765529468'}"
+    },
+    {
+      "endpoint": "/cooperative",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2044.83,
+      "timestamp": "2025-12-12T14:21:12.456538",
+      "error": null,
+      "response_preview": "{'cooperatives': [{'blockchain_coop_id': None, 'created_at': '2025-08-05T07:58:25.223000', 'description': 'Cooperative for Mumbai Central Cooperative', 'id': '693bcb213f14e91254cd297b', 'is_active': T"
+    },
+    {
+      "endpoint": "/cooperative/693bcb213f14e91254cd297b",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2067.07,
+      "timestamp": "2025-12-12T14:21:14.524155",
+      "error": null,
+      "response_preview": "{'blockchain_coop_id': None, 'created_at': '2025-08-05T07:58:25.223000', 'description': 'Cooperative for Mumbai Central Cooperative', 'id': '693bcb213f14e91254cd297b', 'is_active': True, 'member_count"
+    },
+    {
+      "endpoint": "/cooperative/693bcb213f14e91254cd297b/members",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2032.52,
+      "timestamp": "2025-12-12T14:21:16.557037",
+      "error": null,
+      "response_preview": "{'members': [{'address': '321 Residential Colony, Pune', 'id': '693bcb203f14e91254cd2867', 'name': 'Sunita Provision Store', 'phone': '+919876543213', 'wallet_address': '0x4444444444444444444444444444"
+    },
+    {
+      "endpoint": "/cooperative/693bcb213f14e91254cd297b/orders",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2069.31,
+      "timestamp": "2025-12-12T14:21:18.626619",
+      "error": null,
+      "response_preview": "{'orders': []}"
+    },
+    {
+      "endpoint": "/cooperative/693bcb213f14e91254cd297b/join",
+      "method": "POST",
+      "status_code": 400,
+      "success": true,
+      "duration_ms": 2055.05,
+      "timestamp": "2025-12-12T14:21:20.682045",
+      "error": null,
+      "response_preview": "{'error': 'Shopkeeper is already a member of this cooperative', 'status_code': 400}"
+    },
+    {
+      "endpoint": "/blockchain/status",
+      "method": "GET",
+      "status_code": 200,
+      "success": true,
+      "duration_ms": 2042.63,
+      "timestamp": "2025-12-12T14:21:22.725340",
+      "error": null,
+      "response_preview": "{'available': False, 'configured': False, 'contract_address': None, 'network': None}"
+    },
+    {
+      "endpoint": "/blockchain/record-transaction",
+      "method": "POST",
+      "status_code": 503,
+      "success": true,
+      "duration_ms": 2038.31,
+      "timestamp": "2025-12-12T14:21:24.764215",
+      "error": null,
+      "response_preview": "{'error': 'Blockchain service not available'}"
+    },
+    {
+      "endpoint": "/blockchain/transaction/693bd387c3c7b45724998604",
+      "method": "GET",
+      "status_code": 503,
+      "success": true,
+      "duration_ms": 2040.98,
+      "timestamp": "2025-12-12T14:21:26.805465",
+      "error": null,
+      "response_preview": "{'error': 'Blockchain service not available'}"
+    },
+    {
+      "endpoint": "/blockchain/register-shopkeeper",
+      "method": "POST",
+      "status_code": 503,
+      "success": true,
+      "duration_ms": 2078.46,
+      "timestamp": "2025-12-12T14:21:28.884247",
+      "error": null,
+      "response_preview": "{'error': 'Blockchain service not available'}"
+    },
+    {
+      "endpoint": "/blockchain/credit-score/693bcb203f14e91254cd2864",
+      "method": "GET",
+      "status_code": 503,
+      "success": true,
+      "duration_ms": 2062.45,
+      "timestamp": "2025-12-12T14:21:30.947015",
+      "error": null,
+      "response_preview": "{'error': 'Blockchain service not available'}"
+    },
+    {
+      "endpoint": "/shopkeeper/000000000000000000000000",
+      "method": "GET",
+      "status_code": 404,
+      "success": true,
+      "duration_ms": 2033.99,
+      "timestamp": "2025-12-12T14:21:32.981433",
+      "error": null,
+      "response_preview": "{'error': 'Shopkeeper 000000000000000000000000 not found', 'status_code': 404}"
+    },
+    {
+      "endpoint": "/transactions",
+      "method": "POST",
+      "status_code": 400,
+      "success": true,
+      "duration_ms": 2057.91,
+      "timestamp": "2025-12-12T14:21:35.039586",
+      "error": null,
+      "response_preview": "{'error': 'Missing required fields: amount, shopkeeper_id, customer_id', 'status_code': 400}"
+    },
+    {
+      "endpoint": "/customer",
+      "method": "POST",
+      "status_code": 400,
+      "success": true,
+      "duration_ms": 2064.09,
+      "timestamp": "2025-12-12T14:21:37.103997",
+      "error": null,
+      "response_preview": "{'error': 'Missing required fields: phone', 'status_code': 400}"
+    }
+  ],
+  "test_ids_used": {
+    "overview": {
+      "active_cooperatives": 6,
+      "cooperatives": {
+        "active": 6,
+        "total": 6
+      },
+      "customers": {
+        "total": 56
+      },
+      "recent_activity": [
+        {
+          "message": "Sale transaction of Rs. 250.75",
+          "timestamp": "2025-12-12T08:34:15.186000",
+          "type": "transaction"
+        },
+        {
+          "message": "Sale transaction of Rs. 250.75",
+          "timestamp": "2025-12-12T08:25:17.372000",
+          "type": "transaction"
+        },
+        {
+          "message": "Sale transaction of Rs. 250.75",
+          "timestamp": "2025-12-12T08:19:58.095000",
+          "type": "transaction"
+        },
+        {
+          "message": "Sale transaction of Rs. 250.75",
+          "timestamp": "2025-12-12T08:12:49.452000",
+          "type": "transaction"
+        },
+        {
+          "message": "Sale transaction of Rs. 250.75",
+          "timestamp": "2025-12-12T08:06:09.492000",
+          "type": "transaction"
+        },
+        {
+          "message": "Repay transaction of Rs. 369.37",
+          "timestamp": "2025-12-11T23:58:25.088000",
+          "type": "transaction"
+        },
+        {
+          "message": "Sale transaction of Rs. 41.54",
+          "timestamp": "2025-12-11T20:58:25.101000",
+          "type": "transaction"
+        },
+        {
+          "message": "Sale transaction of Rs. 41.20",
+          "timestamp": "2025-12-11T13:33:24.332000",
+          "type": "transaction"
+        },
+        {
+          "message": "Credit transaction of Rs. 949.67",
+          "timestamp": "2025-12-11T12:33:24.356000",
+          "type": "transaction"
+        },
+        {
+          "message": "Repay transaction of Rs. 417.67",
+          "timestamp": "2025-12-10T19:33:24.352000",
+          "type": "transaction"
+        }
+      ],
+      "revenue": {
+        "month": 3718.87,
+        "today": 1253.75,
+        "week": 1336.49
+      },
+      "sales_trend": [
+        {
+          "amount": 679.7299999999999,
+          "date": "2025-11-13T00:00:00"
+        },
+        {
+          "amount": 0,
+          "date": "2025-11-14T00:00:00"
+        },
+        {
+          "amount": 0,
+          "date": "2025-11-15T00:00:00"
+        },
+        {
+          "amount": 0,
+          "date": "2025-11-16T00:00:00"
+        },
+        {
+          "amount": 397.72,
+          "date": "2025-11-17T00:00:00"
+        },
+        {
+          "amount": 0,
+          "date": "2025-11-18T00:00:00"
+        },
+        {
+          "amount": 926.8,
+          "date": "2025-11-19T00:00:00"
+        },
+        {
+          "amount": 0,
+          "date": "2025-11-20T00:00:00"
+        },
+        {
+          "amount": 0,
+          "date": "2025-11-21T00:00:00"
+        },
+        {
+          "amount": 0,
+          "date": "2025-11-22T00:00:00"
+        },
+        {
+          "amount": 95.28,
+          "date": "2025-11-23T00:00:00"
+        },
+        {
+          "amount": 0,
+          "date": "2025-11-24T00:00:00"
+        },
+        {
+          "amount": 0,
+          "date": "2025-11-25T00:00:00"
+        },
+        {
+          "amount": 0,
+          "date": "2025-11-26T00:00:00"
+        },
+        {
+          "amount": 898.68,
+          "date": "2025-11-27T00:00:00"
+        },
+        {
+          "amount": 206.53,
+          "date": "2025-11-28T00:00:00"
+        },
+        {
+          "amount": 1652.8899999999999,
+          "date": "2025-11-29T00:00:00"
+        },
+        {
+          "amount": 0,
+          "date": "2025-11-30T00:00:00"
+        },
+        {
+          "amount": 0,
+          "date": "2025-12-01T00:00:00"
+        },
+        {
+          "amount": 144.2,
+          "date": "2025-12-02T00:00:00"
+        },
+        {
+          "amount": 33.66,
+          "date": "2025-12-03T00:00:00"
+        },
+        {
+          "amount": 1733.93,
+          "date": "2025-12-04T00:00:00"
+        },
+        {
+          "amount": 0,
+          "date": "2025-12-05T00:00:00"
+        },
+        {
+          "amount": 0,
+          "date": "2025-12-06T00:00:00"
+        },
+        {
+          "amount": 470.59,
+          "date": "2025-12-07T00:00:00"
+        },
+        {
+          "amount": 0,
+          "date": "2025-12-08T00:00:00"
+        },
+        {
+          "amount": 0,
+          "date": "2025-12-09T00:00:00"
+        },
+        {
+          "amount": 0,
+          "date": "2025-12-10T00:00:00"
+        },
+        {
+          "amount": 82.74000000000001,
+          "date": "2025-12-11T00:00:00"
+        },
+        {
+          "amount": 1253.75,
+          "date": "2025-12-12T00:00:00"
+        }
+      ],
+      "stores": {
+        "active": 14,
+        "total": 14
+      },
+      "total_stores": 14,
+      "transactions": {
+        "month": 32,
+        "today": 5,
+        "week": 15
+      }
+    },
+    "shopkeeper_id": "693bcb203f14e91254cd2864",
+    "cooperative_id": "693bcb213f14e91254cd297b",
+    "transaction_id": "693bd387c3c7b45724998604",
+    "customer_id": "693bcb203f14e91254cd2875",
+    "new_transaction_id": "693bd76781ccae9938042291",
+    "product_id": "693bcb203f14e91254cd2885",
+    "new_shopkeeper_id": "693bd77281ccae9938042292",
+    "new_customer_id": "693bd77e81ccae9938042293"
+  }
+}

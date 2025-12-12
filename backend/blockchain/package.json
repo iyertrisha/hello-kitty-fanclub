@@ -11,7 +11,12 @@
     "deploy:polygonAmoy": "hardhat run scripts/deploy.js --network polygonAmoy",
     "node": "hardhat node"
   },
-  "keywords": ["blockchain", "kirana", "hardhat", "solidity"],
+  "keywords": [
+    "blockchain",
+    "kirana",
+    "hardhat",
+    "solidity"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
@@ -33,9 +38,7 @@
     "typescript": ">=4.5.0"
   },
   "dependencies": {
-    "dotenv": "^16.6.1"
+    "dotenv": "^16.6.1",
+    "fp-ts": "^2.16.11"
   }
 }
-
-
-
