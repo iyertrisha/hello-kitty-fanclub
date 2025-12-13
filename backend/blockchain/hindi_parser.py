@@ -26,8 +26,12 @@ except ImportError:
 # ============================================================================
 
 # Transaction type keywords
-CREDIT_KEYWORDS = ['उधार', 'उधारी', 'कर्ज', 'कर्जा', 'उधार दे', 'कर्ज दे']
-SALE_KEYWORDS = ['बिक्री', 'बेचो', 'दो', 'दीजिए', 'खरीद', 'बेच', 'बेचना', 'बिकवा']
+# CREDIT: Money owed / goods taken on credit (udhaar lena)
+CREDIT_KEYWORDS = ['उधार', 'उधारी', 'कर्ज', 'कर्जा', 'उधार दे', 'कर्ज दे', 'उधार लिया', 'उधार ले', 'कर्ज लिया']
+# SALE: Stock going out to customers
+SALE_KEYWORDS = ['बिक्री', 'बेचो', 'दो', 'दीजिए', 'बेच', 'बेचना', 'बिकवा']
+# BUYING: Stock coming in (inventory purchase from supplier/vendor)
+BUYING_KEYWORDS = ['खरीद', 'खरीदा', 'खरीदी', 'लिया', 'ली', 'मंगाया', 'मंगाई', 'ऑर्डर', 'स्टॉक']
 
 # Amount keywords
 AMOUNT_KEYWORDS = ['रुपये', 'रुपए', 'रु', '₹', 'का दाम', 'की कीमत', 'दाम', 'कीमत', 'मूल्य']
@@ -107,12 +111,76 @@ PRODUCT_MAPPING = {
     'शैम्पू': 'Shampoo',
     'टूथपेस्ट': 'Toothpaste',
     'दंतमंजन': 'Toothpaste',
+    
+    # Additional common items
+    'मिर्च': 'Chili',
+    'अदरक': 'Ginger',
+    'लहसुन': 'Garlic',
+    'टमाटर': 'Tomatoes',  # Duplicate but common variant
+    'बीन्स': 'Beans',
+    'मटर': 'Peas',
+    'गाजर': 'Carrot',
+    'मूली': 'Radish',
+    'पालक': 'Spinach',
+    'मेथी': 'Fenugreek',
+    'धनिया': 'Coriander Leaves',
+    'पुदीना': 'Mint',
+}
+
+
+# ============================================================================
+# NUMBER WORD MAPPINGS (Hindi and English)
+# ============================================================================
+
+# Hindi number words (0-20, then tens, hundreds)
+HINDI_NUMBER_WORDS = {
+    'एक': 1, 'दो': 2, 'तीन': 3, 'चार': 4, 'पांच': 5, 'पाँच': 5,
+    'छह': 6, 'छः': 6, 'सात': 7, 'आठ': 8, 'नौ': 9, 'दस': 10,
+    'ग्यारह': 11, 'बारह': 12, 'तेरह': 13, 'चौदह': 14, 'पंद्रह': 15,
+    'सोलह': 16, 'सत्रह': 17, 'अठारह': 18, 'उन्नीस': 19, 'बीस': 20,
+    'तीस': 30, 'चालीस': 40, 'पचास': 50, 'साठ': 60, 'सत्तर': 70,
+    'अस्सी': 80, 'नब्बे': 90, 'सौ': 100, 'हज़ार': 1000
+}
+
+# English number words (0-20, then tens, hundreds)
+ENGLISH_NUMBER_WORDS = {
+    'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+    'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
+    'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
+    'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
+    'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60, 'seventy': 70,
+    'eighty': 80, 'ninety': 90, 'hundred': 100, 'thousand': 1000
 }
 
 
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
+
+def convert_number_word_to_digit(text: str) -> Optional[float]:
+    """
+    Convert Hindi or English number words to numeric value.
+    Supports simple cases like "do kilo" (2 kg), "two packets" (2 packets).
+    
+    Args:
+        text: Text containing number word
+    
+    Returns:
+        Numeric value (float) or None if not found
+    """
+    text_lower = text.lower().strip()
+    
+    # Try Hindi number words first
+    for word, value in HINDI_NUMBER_WORDS.items():
+        if word in text_lower:
+            return float(value)
+    
+    # Try English number words
+    for word, value in ENGLISH_NUMBER_WORDS.items():
+        if word in text_lower:
+            return float(value)
+    
+    return None
 
 def fuzzy_match_name(name: str, candidates: List[str], threshold: float = 0.6) -> Optional[str]:
     """
@@ -211,22 +279,29 @@ def parse_hindi_intent(transcript: str) -> Dict[str, str]:
         transcript: Hindi transcript text
     
     Returns:
-        {'type': 'sale' | 'credit'}
+        {'type': 'sale' | 'credit', 'is_buying': bool}
     """
     transcript_lower = transcript.lower()
+    is_buying = False
     
-    # Check for credit keywords first
+    # Priority: BUYING > CREDIT > SALE (more specific first)
+    # Check for buying keywords first (stock coming in)
+    for keyword in BUYING_KEYWORDS:
+        if keyword in transcript_lower:
+            return {'type': 'sale', 'is_buying': True}  # Map to 'sale' type (database constraint)
+    
+    # Check for credit keywords (udhaar lena)
     for keyword in CREDIT_KEYWORDS:
         if keyword in transcript_lower:
-            return {'type': 'credit'}
+            return {'type': 'credit', 'is_buying': False}
     
-    # Check for sale keywords
+    # Check for sale keywords (stock going out)
     for keyword in SALE_KEYWORDS:
         if keyword in transcript_lower:
-            return {'type': 'sale'}
+            return {'type': 'sale', 'is_buying': False}
     
     # Default to credit if no keywords found (safer for shopkeepers)
-    return {'type': 'credit'}
+    return {'type': 'credit', 'is_buying': False}
 
 
 def extract_customer_name(transcript: str, customer_list: List[Dict[str, Any]]) -> Optional[str]:
@@ -305,17 +380,17 @@ def extract_product(transcript: str, product_map: Dict[str, str] = None) -> Opti
 def extract_quantity_and_unit(transcript: str) -> Dict[str, Any]:
     """
     Extract quantity and unit from transcript.
+    Supports both numeric digits and number words (Hindi/English).
     
     Args:
-        transcript: Hindi transcript
+        transcript: Hindi/English transcript
     
     Returns:
         {'quantity': float, 'unit': str} or {'quantity': None, 'unit': None}
     """
-    # Pattern: "<number> <unit>"
-    # Try each unit
+    # First, try numeric patterns: "<number> <unit>"
     for hindi_unit, english_unit in QUANTITY_UNITS.items():
-        # Pattern: number before unit
+        # Pattern: numeric digit before unit
         pattern1 = rf'(\d+(?:\.\d+)?)\s*{re.escape(hindi_unit)}'
         match1 = re.search(pattern1, transcript, re.IGNORECASE)
         if match1:
@@ -334,6 +409,30 @@ def extract_quantity_and_unit(transcript: str) -> Dict[str, Any]:
                 return {'quantity': quantity, 'unit': english_unit}
             except ValueError:
                 continue
+    
+    # Second, try number words: "<number_word> <unit>"
+    # Check for Hindi number words
+    for hindi_unit, english_unit in QUANTITY_UNITS.items():
+        for hindi_number, numeric_value in HINDI_NUMBER_WORDS.items():
+            # Pattern: Hindi number word before unit
+            pattern = rf'{re.escape(hindi_number)}\s+{re.escape(hindi_unit)}'
+            match = re.search(pattern, transcript, re.IGNORECASE)
+            if match:
+                return {'quantity': float(numeric_value), 'unit': english_unit}
+    
+    # Check for English number words
+    for hindi_unit, english_unit in QUANTITY_UNITS.items():
+        for english_number, numeric_value in ENGLISH_NUMBER_WORDS.items():
+            # Pattern: English number word before unit (works with English unit names too)
+            # Also try with Hindi units (mixed language)
+            patterns = [
+                rf'{re.escape(english_number)}\s+{re.escape(hindi_unit)}',
+                rf'{re.escape(english_number)}\s+{re.escape(english_unit)}',
+            ]
+            for pattern in patterns:
+                match = re.search(pattern, transcript, re.IGNORECASE)
+                if match:
+                    return {'quantity': float(numeric_value), 'unit': english_unit}
     
     # If no unit found, look for standalone numbers (assume kg for common items)
     numbers = re.findall(r'\d+(?:\.\d+)?', transcript)
@@ -382,16 +481,17 @@ def extract_amount(transcript: str, tx_type: str) -> Optional[float]:
         # For credit, largest number is likely the amount
         amount_rupees = max(numbers)
     else:
-        # For sale, look for number that's not quantity (usually larger)
+        # For sale, look for number that's not quantity
         # If we have quantity, amount should be different number
         quantity_data = extract_quantity_and_unit(transcript)
         if quantity_data['quantity']:
-            # Amount is the other number (usually larger)
+            # Amount is the other number (exclude quantity)
             other_numbers = [n for n in numbers if abs(n - quantity_data['quantity']) > 0.1]
             if other_numbers:
                 amount_rupees = max(other_numbers)
             else:
-                amount_rupees = max(numbers)
+                # No amount found - don't use quantity as amount
+                return None
         else:
             amount_rupees = max(numbers)
     
@@ -406,7 +506,8 @@ def assemble_transaction_object(
     unit: Optional[str],
     amount: Optional[float],
     price_per_unit: Optional[float] = None,
-    customer_name: Optional[str] = None
+    customer_name: Optional[str] = None,
+    is_buying: bool = False
 ) -> Dict[str, Any]:
     """
     Assemble final transaction object and generate Hindi confirmation text.
@@ -457,7 +558,7 @@ def assemble_transaction_object(
     
     confirmation_text = "आपने कहा: " + ", ".join(confirmation_parts) + "। पुष्टि करें?"
     
-    return {
+    result = {
         'customer_id': customer_id,
         'type': tx_type,
         'product': product,
@@ -465,8 +566,16 @@ def assemble_transaction_object(
         'unit': unit,
         'amount': amount,
         'price_per_unit': price_per_unit,
+        'customer_name': customer_name,
         'confirmation_text_hindi': confirmation_text
     }
+    
+    # Add metadata for buying transactions (mapped to 'sale' type)
+    if is_buying:
+        result['is_buying'] = True  # Flag to indicate this is a buying/inventory transaction
+        result['transaction_subtype'] = 'buying'  # Store original intent
+    
+    return result
 
 
 # ============================================================================
@@ -494,6 +603,7 @@ def parse_hindi_transaction(
     # Step 1: Parse intent (transaction type)
     intent = parse_hindi_intent(transcript)
     tx_type = intent['type']
+    is_buying = intent.get('is_buying', False)  # Flag for buying transactions
     
     # Step 2: Extract customer name
     customer_id = extract_customer_name(transcript, customer_list)
@@ -504,6 +614,26 @@ def parse_hindi_transaction(
             if customer.get('id') == customer_id:
                 customer_name = customer.get('name')
                 break
+    
+    # Fallback: Extract name even if fuzzy match failed (for new customers)
+    if customer_name is None:
+        # Pattern: "ग्राहक <name>" or just "<name>" at start
+        patterns = [
+            r'ग्राहक\s+([^\s,]+)',
+            r'^([^\s,]+)\s*,',  # Name at start before comma
+        ]
+        
+        extracted_name = None
+        for pattern in patterns:
+            match = re.search(pattern, transcript, re.IGNORECASE)
+            if match:
+                extracted_name = match.group(1).strip()
+                # Skip if it's a number or common word
+                if extracted_name.isdigit() or extracted_name in ['रुपये', 'रुपया', '₹', '₹']:
+                    continue
+                if extracted_name and len(extracted_name) > 1:
+                    customer_name = extracted_name
+                    break
     
     # Step 3: Extract product (for sale transactions)
     product = None
@@ -546,6 +676,7 @@ def parse_hindi_transaction(
         unit=unit,
         amount=amount,
         price_per_unit=price_per_unit,
-        customer_name=customer_name
+        customer_name=customer_name,
+        is_buying=is_buying
     )
 

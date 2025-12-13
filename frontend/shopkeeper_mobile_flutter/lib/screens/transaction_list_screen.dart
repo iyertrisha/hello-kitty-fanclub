@@ -16,8 +16,21 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
   @override
   void initState() {
     super.initState();
+    _loadData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh data when screen becomes visible (e.g., when switching tabs)
+    _loadData();
+  }
+
+  void _loadData() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<TransactionProvider>().loadTransactions();
+      if (mounted) {
+        context.read<TransactionProvider>().loadTransactions();
+      }
     });
   }
 
@@ -29,13 +42,17 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () {
-              Navigator.push(
+            onPressed: () async {
+              final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => const RecordTransactionScreen(),
                 ),
               );
+              // Refresh data when returning from record screen
+              if (result == true || mounted) {
+                _loadData();
+              }
             },
           ),
         ],
@@ -59,13 +76,17 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                   ),
                   const SizedBox(height: 24),
                   ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
+                    onPressed: () async {
+                      final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) => const RecordTransactionScreen(),
                         ),
                       );
+                      // Refresh data when returning from record screen
+                      if (result == true || mounted) {
+                        _loadData();
+                      }
                     },
                     icon: const Icon(Icons.add),
                     label: const Text('Add Transaction'),
@@ -95,10 +116,22 @@ class _TransactionListScreenState extends State<TransactionListScreen> {
                         color: Colors.white,
                       ),
                     ),
-                    title: Text(transaction.description),
+                    title: Text(
+                      transaction.customerName ?? transaction.description,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (transaction.customerName != null && 
+                            transaction.description != transaction.customerName)
+                          Text(
+                            transaction.description,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[700],
+                            ),
+                          ),
                         Text(formatDateTime(transaction.date)),
                         if (transaction.transcription != null)
                           Text(

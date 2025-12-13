@@ -4,10 +4,12 @@ import '../providers/audio_provider.dart';
 
 class VoiceRecorder extends StatefulWidget {
   final Function(String transcription)? onTranscriptionComplete;
+  final String? language;
 
   const VoiceRecorder({
     super.key,
     this.onTranscriptionComplete,
+    this.language,
   });
 
   @override
@@ -84,7 +86,7 @@ class _VoiceRecorderState extends State<VoiceRecorder> {
                     onPressed: () async {
                       try {
                         await audioProvider.stopRecording();
-                        await audioProvider.transcribeAudio();
+                        await audioProvider.transcribeAudio(language: widget.language);
                         if (audioProvider.transcription != null &&
                             widget.onTranscriptionComplete != null) {
                           widget.onTranscriptionComplete!(

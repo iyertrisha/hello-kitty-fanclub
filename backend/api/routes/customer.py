@@ -5,6 +5,7 @@ from flask import Blueprint, request, jsonify
 from datetime import datetime
 from services.customer import (
     get_customer,
+    get_all_customers,
     create_customer,
     get_customer_orders,
     get_customer_credits
@@ -16,6 +17,20 @@ import logging
 logger = logging.getLogger(__name__)
 
 customer_bp = Blueprint('customer', __name__)
+
+
+@customer_bp.route('', methods=['GET'])
+def get_customers_route():
+    """Get list of all customers"""
+    try:
+        customers = get_all_customers()
+        return jsonify({
+            'data': customers,
+            'customers': customers,  # For backward compatibility
+        }), 200
+    except Exception as e:
+        logger.error(f"Error getting customers: {e}", exc_info=True)
+        raise ValidationError(f"Failed to get customers: {str(e)}")
 
 
 @customer_bp.route('', methods=['POST'])

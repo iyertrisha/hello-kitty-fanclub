@@ -30,7 +30,7 @@ dependencies:
   path_provider: ^2.1.1
   
   # Audio Recording & Playback
-  # record: ^5.1.2  # Temporarily disabled for Windows build - record_linux causes compilation errors
+  record: ^6.0.0  # Updated to newer version that may have fixed Gradle issues
   audioplayers: ^5.2.1
   permission_handler: ^11.1.0
   path_provider_android: ^2.2.0

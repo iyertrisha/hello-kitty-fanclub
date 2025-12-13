@@ -23,21 +23,64 @@ def validate_request(schema=None, required_fields=None):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
+            # #region agent log
+            import json
+            import os
+            log_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), '.cursor', 'debug.log')
+            os.makedirs(os.path.dirname(log_path), exist_ok=True)
+            try:
+                with open(log_path, 'a') as f:
+                    f.write(json.dumps({'location':'validation.py:25','message':'Validation middleware entry','data':{'isJson':request.is_json,'contentType':request.content_type,'requiredFields':required_fields},'timestamp':int(__import__('time').time()*1000),'sessionId':'debug-session','runId':'run1','hypothesisId':'E'})+'\n')
+            except Exception as e:
+                pass
+            # #endregion
+            
             if not request.is_json:
+                # #region agent log
+                try:
+                    with open(log_path, 'a') as f:
+                        f.write(json.dumps({'location':'validation.py:27','message':'Not JSON request','data':{'contentType':request.content_type},'timestamp':int(__import__('time').time()*1000),'sessionId':'debug-session','runId':'run1','hypothesisId':'E'})+'\n')
+                except:
+                    pass
+                # #endregion
                 raise BadRequestError("Request must be JSON")
             
             data = request.get_json()
             if data is None:
                 data = {}
             
+            # #region agent log
+            try:
+                with open(log_path, 'a') as f:
+                    f.write(json.dumps({'location':'validation.py:33','message':'Parsed request data','data':{'dataKeys':list(data.keys()) if data else [],'hasData':bool(data)},'timestamp':int(__import__('time').time()*1000),'sessionId':'debug-session','runId':'run1','hypothesisId':'E'})+'\n')
+            except:
+                pass
+            # #endregion
+            
             # Validate required fields
             if required_fields:
                 missing_fields = [field for field in required_fields if field not in data or data[field] is None]
                 if missing_fields:
+                    # #region agent log
+                    try:
+                        with open(log_path, 'a') as f:
+                            f.write(json.dumps({'location':'validation.py:37','message':'Validation failed - missing fields','data':{'missingFields':missing_fields,'receivedFields':list(data.keys())},'timestamp':int(__import__('time').time()*1000),'sessionId':'debug-session','runId':'run1','hypothesisId':'B'})+'\n')
+                    except:
+                        pass
+                    # #endregion
                     raise ValidationError(f"Missing required fields: {', '.join(missing_fields)}")
             
             # Store validated data in request context
             request.validated_data = data
+            
+            # #region agent log
+            try:
+                with open(log_path, 'a') as f:
+                    f.write(json.dumps({'location':'validation.py:40','message':'Validation passed','data':{},'timestamp':int(__import__('time').time()*1000),'sessionId':'debug-session','runId':'run1','hypothesisId':'C'})+'\n')
+            except:
+                pass
+            # #endregion
+            
             return f(*args, **kwargs)
         
         return decorated_function

@@ -2,10 +2,31 @@
 API Routes module
 Register all blueprints here
 """
-from flask import Blueprint
+from flask import Blueprint, jsonify
+import logging
+
+logger = logging.getLogger(__name__)
 
 def register_blueprints(app):
     """Register all route blueprints with Flask app"""
+    
+    # Test endpoint to verify connectivity
+    @app.route('/api/test', methods=['GET', 'POST'])
+    def test_endpoint():
+        """Test endpoint to verify backend is reachable"""
+        # #region agent log
+        import json
+        import os
+        from flask import request
+        log_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '.cursor', 'debug.log')
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        try:
+            with open(log_path, 'a') as f:
+                f.write(json.dumps({'location':'routes/__init__.py:12','message':'Test endpoint reached','data':{'method':request.method,'remoteAddr':request.remote_addr},'timestamp':int(__import__('time').time()*1000),'sessionId':'debug-session','runId':'run1','hypothesisId':'A'})+'\n')
+        except:
+            pass
+        # #endregion
+        return jsonify({'status': 'ok', 'message': 'Backend is reachable'}), 200
     
     # Import blueprints
     from api.routes.transactions import transactions_bp
@@ -32,4 +53,20 @@ def register_blueprints(app):
     app.register_blueprint(grocery_bp, url_prefix='/api/grocery')
     app.register_blueprint(noticeboard_bp, url_prefix='/api/noticeboard')
     app.register_blueprint(supplier_bp, url_prefix='/api/supplier')
+    
+    # Add alias route for /api/customers (plural) for Flutter compatibility
+    @app.route('/api/customers', methods=['GET'])
+    def get_customers_alias():
+        """Alias for /api/customer to support Flutter app"""
+        from services.customer import get_all_customers
+        try:
+            customers = get_all_customers()
+            return jsonify({
+                'data': customers,
+                'customers': customers,  # For backward compatibility
+            }), 200
+        except Exception as e:
+            logger.error(f"Error getting customers: {e}", exc_info=True)
+            from api.middleware.error_handler import ValidationError
+            raise ValidationError(f"Failed to get customers: {str(e)}")
 

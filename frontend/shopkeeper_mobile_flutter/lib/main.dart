@@ -111,13 +111,17 @@ class _MainScreenState extends State<MainScreen> {
       ),
       floatingActionButton: _currentIndex == 2
           ? FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => const RecordTransactionScreen(),
                   ),
                 );
+                // Refresh transaction list when returning
+                if (result == true && mounted) {
+                  context.read<TransactionProvider>().loadTransactions();
+                }
               },
               child: const Icon(Icons.add),
             )

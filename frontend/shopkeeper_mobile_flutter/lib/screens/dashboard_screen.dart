@@ -20,8 +20,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    _loadData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh data when screen becomes visible (e.g., when switching tabs)
+    _loadData();
+  }
+
+  void _loadData() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<TransactionProvider>().loadTransactions();
+      if (mounted) {
+        context.read<TransactionProvider>().loadTransactions();
+      }
     });
   }
 
@@ -104,13 +117,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         'Record Transaction',
                         Icons.add_circle,
                         Colors.blue,
-                        () {
-                          Navigator.push(
+                        () async {
+                          final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) => const RecordTransactionScreen(),
                             ),
                           );
+                          // Refresh data when returning from record screen
+                          if (result == true || mounted) {
+                            _loadData();
+                          }
                         },
                       ),
                       _buildActionCard(
@@ -225,8 +242,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               color: Colors.white,
                             ),
                           ),
-                          title: Text(transaction.description),
-                          subtitle: Text(formatDate(transaction.date)),
+                          title: Text(
+                            transaction.customerName ?? transaction.description,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (transaction.customerName != null && 
+                                  transaction.description != transaction.customerName)
+                                Text(
+                                  transaction.description,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[700],
+                                  ),
+                                ),
+                              Text(formatDate(transaction.date)),
+                            ],
+                          ),
                           trailing: Text(
                             '${transaction.type == 'credit' ? '+' : '-'}${formatCurrency(transaction.amount)}',
                             style: TextStyle(

@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         applicationId = "com.shopkeeper.shopkeeper_mobile_flutter"
-        minSdk = 21
+        minSdk = 23
         targetSdk = 34
         
         versionCode = flutter.versionCode

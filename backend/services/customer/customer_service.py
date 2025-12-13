@@ -9,6 +9,28 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def get_all_customers():
+    """
+    Get list of all customers
+    
+    Returns:
+        list: List of customer dictionaries with id and name
+    """
+    try:
+        customers = Customer.objects().only('id', 'name', 'phone')
+        return [
+            {
+                'id': str(customer.id),
+                'name': customer.name,
+                'phone': customer.phone,
+            }
+            for customer in customers
+        ]
+    except Exception as e:
+        logger.error(f"Error getting all customers: {e}", exc_info=True)
+        return []
+
+
 def get_customer(customer_id):
     """
     Get customer with history

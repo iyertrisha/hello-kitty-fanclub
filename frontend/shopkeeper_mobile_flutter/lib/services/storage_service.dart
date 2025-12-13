@@ -23,8 +23,9 @@ class StorageService {
     String dbPath = path.join(await getDatabasesPath(), 'shopkeeper.db');
     return await openDatabase(
       dbPath,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -40,7 +41,9 @@ class StorageService {
         audioPath TEXT,
         transcription TEXT,
         synced INTEGER NOT NULL DEFAULT 0,
-        cooperativeId TEXT
+        cooperativeId TEXT,
+        shopkeeper_id TEXT,
+        customer_id TEXT
       )
     ''');
 
@@ -86,12 +89,31 @@ class StorageService {
     ''');
   }
 
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Add shopkeeper_id and customer_id columns to transactions table
+      try {
+        await db.execute('ALTER TABLE transactions ADD COLUMN shopkeeper_id TEXT');
+      } catch (e) {
+        // Column might already exist
+      }
+      try {
+        await db.execute('ALTER TABLE transactions ADD COLUMN customer_id TEXT');
+      } catch (e) {
+        // Column might already exist
+      }
+    }
+  }
+
   // Transaction methods
   Future<void> saveTransaction(models.Transaction transaction) async {
     final db = await database;
     await db.insert(
       'transactions',
-      transaction.toJson(),
+      {
+        ...transaction.toJson(),
+        'synced': transaction.synced ? 1 : 0,  // Convert bool to int
+      },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
