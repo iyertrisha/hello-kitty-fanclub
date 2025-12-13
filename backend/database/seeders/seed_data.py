@@ -18,7 +18,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def seed_shopkeepers(count=8):
+def seed_shopkeepers(count=30):
     """Seed shopkeepers"""
     shopkeepers = []
     
@@ -33,6 +33,29 @@ def seed_shopkeepers(count=8):
         {'name': 'Meera Groceries', 'address': '987 Shopping Complex, Dwarka, Delhi', 'phone': '+919876543215', 'wallet': '0x6666666666666666666666666666666666666666', 'lat': 28.5900, 'lng': 77.0460},
         {'name': 'Kumar Store', 'address': '147 Village Road, Saket, Delhi', 'phone': '+919876543216', 'wallet': '0x7777777777777777777777777777777777777777', 'lat': 28.5240, 'lng': 77.2060},
         {'name': 'Lakshmi Kirana', 'address': '258 Town Center, Chandni Chowk, Delhi', 'phone': '+919876543217', 'wallet': '0x8888888888888888888888888888888888888888', 'lat': 28.6510, 'lng': 77.2310},
+        # Additional stores for better map coverage
+        {'name': 'Sharma General Store', 'address': 'Block A, Sector 15, Noida, Delhi NCR', 'phone': '+919876543218', 'wallet': '0x9999999999999999999999999999999999999999', 'lat': 28.5800, 'lng': 77.3200},
+        {'name': 'Patel Kirana', 'address': 'Main Bazaar, Paharganj, Delhi', 'phone': '+919876543219', 'wallet': '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'lat': 28.6450, 'lng': 77.2100},
+        {'name': 'Gupta Provision', 'address': 'Market Complex, Rajouri Garden, Delhi', 'phone': '+919876543220', 'wallet': '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', 'lat': 28.6500, 'lng': 77.1200},
+        {'name': 'Singh Grocery Mart', 'address': 'Sector 18, Gurgaon, Haryana', 'phone': '+919876543221', 'wallet': '0xcccccccccccccccccccccccccccccccccccccccc', 'lat': 28.4300, 'lng': 77.0900},
+        {'name': 'Verma Store', 'address': 'Model Town, North Delhi', 'phone': '+919876543222', 'wallet': '0xdddddddddddddddddddddddddddddddddddddddd', 'lat': 28.7100, 'lng': 77.2000},
+        {'name': 'Yadav Kirana', 'address': 'Pitampura, North West Delhi', 'phone': '+919876543223', 'wallet': '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee', 'lat': 28.6900, 'lng': 77.1400},
+        {'name': 'Reddy General Store', 'address': 'Greater Kailash, South Delhi', 'phone': '+919876543224', 'wallet': '0xffffffffffffffffffffffffffffffffffffffff', 'lat': 28.5500, 'lng': 77.2400},
+        {'name': 'Rao Groceries', 'address': 'Vasant Kunj, South West Delhi', 'phone': '+919876543225', 'wallet': '0x1010101010101010101010101010101010101010', 'lat': 28.5300, 'lng': 77.1500},
+        {'name': 'Jain Provision Store', 'address': 'Shahdara, East Delhi', 'phone': '+919876543226', 'wallet': '0x2020202020202020202020202020202020202020', 'lat': 28.6800, 'lng': 77.2800},
+        {'name': 'Agarwal Kirana', 'address': 'Patparganj, East Delhi', 'phone': '+919876543227', 'wallet': '0x3030303030303030303030303030303030303030', 'lat': 28.6200, 'lng': 77.3000},
+        {'name': 'Malhotra Store', 'address': 'Paschim Vihar, West Delhi', 'phone': '+919876543228', 'wallet': '0x4040404040404040404040404040404040404040', 'lat': 28.6800, 'lng': 77.1000},
+        {'name': 'Khanna Grocery', 'address': 'Rajendra Place, Central Delhi', 'phone': '+919876543229', 'wallet': '0x5050505050505050505050505050505050505050', 'lat': 28.6400, 'lng': 77.1900},
+        {'name': 'Bansal Provision', 'address': 'Kirti Nagar, West Delhi', 'phone': '+919876543230', 'wallet': '0x6060606060606060606060606060606060606060', 'lat': 28.6500, 'lng': 77.1600},
+        {'name': 'Mehta Kirana Store', 'address': 'Nehru Place, South Delhi', 'phone': '+919876543231', 'wallet': '0x7070707070707070707070707070707070707070', 'lat': 28.5500, 'lng': 77.2500},
+        {'name': 'Seth General Store', 'address': 'Laxmi Nagar, East Delhi', 'phone': '+919876543232', 'wallet': '0x8080808080808080808080808080808080808080', 'lat': 28.6400, 'lng': 77.2800},
+        {'name': 'Bhatia Groceries', 'address': 'Mayur Vihar, East Delhi', 'phone': '+919876543233', 'wallet': '0x9090909090909090909090909090909090909090', 'lat': 28.6000, 'lng': 77.3000},
+        {'name': 'Chopra Store', 'address': 'Rohini Sector 7, North Delhi', 'phone': '+919876543234', 'wallet': '0xa0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0', 'lat': 28.7500, 'lng': 77.1300},
+        {'name': 'Kapoor Kirana', 'address': 'Dwarka Sector 10, South West Delhi', 'phone': '+919876543235', 'wallet': '0xb0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0', 'lat': 28.5800, 'lng': 77.0500},
+        {'name': 'Tandon Provision', 'address': 'Noida Sector 62, Noida', 'phone': '+919876543236', 'wallet': '0xc0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0', 'lat': 28.6200, 'lng': 77.3700},
+        {'name': 'Saxena Grocery', 'address': 'Vaishali, Ghaziabad', 'phone': '+919876543237', 'wallet': '0xd0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0d0', 'lat': 28.6500, 'lng': 77.3400},
+        {'name': 'Mathur Store', 'address': 'Sector 29, Gurgaon', 'phone': '+919876543238', 'wallet': '0xe0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0e0', 'lat': 28.4500, 'lng': 77.0800},
+        {'name': 'Nair Kirana', 'address': 'Saket Market, South Delhi', 'phone': '+919876543239', 'wallet': '0xf0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0', 'lat': 28.5200, 'lng': 77.2000},
     ]
     
     for i, data in enumerate(shopkeeper_data[:count]):
@@ -266,8 +289,8 @@ def seed_all():
     # Customer.objects.delete()
     # Shopkeeper.objects.delete()
     
-    # Seed data
-    shopkeepers = seed_shopkeepers(8)
+    # Seed data - Increased to 30 stores for better map coverage
+    shopkeepers = seed_shopkeepers(30)
     customers = seed_customers(25)
     products = seed_products(shopkeepers, 12)
     transactions = seed_transactions(shopkeepers, customers, products, 150)

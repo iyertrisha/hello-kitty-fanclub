@@ -239,12 +239,14 @@ def get_stores_route():
             if radius is None:
                 radius = 10.0  # Default 10km
             
-            # Get all active shopkeepers with locations
-            all_stores = Shopkeeper.objects(is_active=True, location__exists=True)
+            # Get all active shopkeepers - filter by location in Python
+            # MongoEngine's location__exists might not work correctly
+            all_stores = Shopkeeper.objects(is_active=True)
             
             stores_in_area = []
             for shopkeeper in all_stores:
-                if not shopkeeper.location:
+                # Skip stores without valid locations
+                if not shopkeeper.location or shopkeeper.location.latitude is None or shopkeeper.location.longitude is None:
                     continue
                 
                 store_location = {
@@ -281,6 +283,14 @@ def get_stores_route():
             logger.info(f"Getting stores for supplier {supplier_id}")
             stores = get_stores_in_service_area(supplier_id)
             logger.info(f"Found {len(stores)} stores for supplier {supplier_id}")
+            
+            # Log stores with/without locations for debugging
+            stores_with_locations = [s for s in stores if s.get('location') and s['location'].get('latitude') and s['location'].get('longitude')]
+            stores_without_locations = [s for s in stores if not s.get('location') or not s['location'].get('latitude') or not s['location'].get('longitude')]
+            if stores_without_locations:
+                logger.warning(f"Found {len(stores_without_locations)} stores without valid locations for supplier {supplier_id}")
+            logger.info(f"Stores with valid locations: {len(stores_with_locations)}")
+            
             return jsonify({
                 'stores': stores,
                 'count': len(stores)

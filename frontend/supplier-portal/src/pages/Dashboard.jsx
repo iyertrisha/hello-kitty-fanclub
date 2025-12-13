@@ -31,11 +31,34 @@ const Dashboard = () => {
     
     try {
       setLoading(true);
+      console.log('Loading stores for supplier:', supplier.id, 'Service area:', supplier.service_area_center);
       const response = await supplierApi.getStores();
-      setStores(response.stores || []);
+      console.log('API Response:', response);
+      const storesList = response.stores || [];
+      console.log('Loaded stores:', storesList.length, storesList);
+      
+      // Log stores without locations for debugging
+      const storesWithoutLocations = storesList.filter(s => !s.location || !s.location.latitude || !s.location.longitude);
+      if (storesWithoutLocations.length > 0) {
+        console.warn('Stores without valid locations:', storesWithoutLocations.length, storesWithoutLocations);
+      }
+      
+      if (storesList.length === 0) {
+        console.warn('No stores returned from API. Check backend logs for details.');
+        console.warn('Supplier service area:', supplier.service_area_center);
+        console.warn('Supplier radius:', supplier.service_area_radius_km);
+      }
+      
+      setStores(storesList);
     } catch (error) {
       console.error('Error loading stores:', error);
-      alert('Failed to load stores. Please set your service area first.');
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to load stores';
+      alert(`Failed to load stores: ${errorMessage}. ${!supplier.service_area_center ? 'Please set your service area first.' : ''}`);
     } finally {
       setLoading(false);
     }

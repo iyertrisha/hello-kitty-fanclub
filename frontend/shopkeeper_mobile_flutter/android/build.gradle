@@ -13,24 +13,6 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
-subprojects {
-    // Configure Java 17 for all subprojects BEFORE evaluation
-    // This avoids the "already evaluated" error
-    beforeEvaluate { project ->
-        if (project.hasProperty('android')) {
-            project.android {
-                // Set compileSdkVersion early to fix record_android issues
-                compileSdkVersion = 34
-                compileOptions {
-                    sourceCompatibility = JavaVersion.VERSION_17
-                    targetCompatibility = JavaVersion.VERSION_17
-                }
-            }
-        }
-    }
-    
-}
-
 
 tasks.register("clean", Delete) {
     delete rootProject.buildDir

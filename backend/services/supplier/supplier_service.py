@@ -175,22 +175,36 @@ def get_stores_in_service_area(supplier_id):
     except Supplier.DoesNotExist:
         raise NotFoundError(f"Supplier {supplier_id} not found")
     
+    # If no service area is set, use Delhi center as default (for testing)
     if not supplier.service_area_center:
-        return []
+        logger.warning(f"Supplier {supplier_id} has no service area center set, using default Delhi center")
+        center_location = {
+            'latitude': 28.6139,  # Delhi center (Connaught Place)
+            'longitude': 77.2090
+        }
+        radius_km = 50.0  # Large radius to show all Delhi stores
+    else:
+        center_location = {
+            'latitude': supplier.service_area_center.latitude,
+            'longitude': supplier.service_area_center.longitude
+        }
+        radius_km = supplier.service_area_radius_km or 10.0  # Default to 10km if not set
     
-    center_location = {
-        'latitude': supplier.service_area_center.latitude,
-        'longitude': supplier.service_area_center.longitude
-    }
-    radius_km = supplier.service_area_radius_km
-    
-    # Get all active stores with locations
-    all_stores = Shopkeeper.objects(is_active=True, location__exists=True)
+    # Get all active stores - check for location in Python rather than query
+    # MongoEngine's location__exists might not work correctly
+    all_stores = Shopkeeper.objects(is_active=True)
+    logger.info(f"Found {all_stores.count()} active shopkeepers in database")
     
     stores_in_area = []
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    stores_without_location = 0
     
     for store in all_stores:
+        # Skip stores without valid locations
+        if not store.location or store.location.latitude is None or store.location.longitude is None:
+            stores_without_location += 1
+            continue
+        
         store_location = {
             'latitude': store.location.latitude,
             'longitude': store.location.longitude
@@ -246,6 +260,10 @@ def get_stores_in_service_area(supplier_id):
     
     # Sort by distance
     stores_in_area.sort(key=lambda x: x['distance_km'])
+    
+    logger.info(f"Found {len(stores_in_area)} stores within {radius_km}km of center ({center_location['latitude']}, {center_location['longitude']})")
+    if stores_without_location > 0:
+        logger.warning(f"Skipped {stores_without_location} stores without valid locations")
     
     return stores_in_area
 

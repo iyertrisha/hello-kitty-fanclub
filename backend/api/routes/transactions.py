@@ -225,7 +225,7 @@ def update_transaction_status_route(transaction_id):
 
 @transactions_bp.route('/transcribe', methods=['POST'])
 def transcribe_audio_route():
-    """Upload audio for transcription (calls Trisha's Google Speech API)"""
+    """Upload audio for transcription using speech_recognition library (same as voice_demo.py)"""
     try:
         # Accept both 'audio' (from Flutter) and 'audio_file' (backward compatibility)
         audio_file = None
@@ -236,41 +236,120 @@ def transcribe_audio_route():
         else:
             raise ValidationError("No audio file provided. Expected 'audio' or 'audio_file' field.")
         
-        # Import Google Speech API integration (Trisha's work)
-        # This will be available when Trisha completes her integration
+        # Get language from form data or query params (Flutter sends as 'language' in form)
+        language_code = request.form.get('language') or request.form.get('language_code') or 'hi-IN'
+        
+        # Use speech_recognition library (same as voice_demo.py)
         try:
-            sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'integrations' / 'google-speech'))
-            from google_speech import transcribe_audio_bytes
+            import speech_recognition as sr
+            import io
+            import tempfile
+            import os
             
-            # Read audio file bytes
+            # Get filename to detect format
+            filename = audio_file.filename or 'audio.m4a'
+            file_ext = os.path.splitext(filename)[1].lower()
+            
+            # Save audio file temporarily
             audio_bytes = audio_file.read()
+            audio_file.seek(0)  # Reset file pointer
             
-            # Get language from form data or query params (Flutter sends as 'language' in form)
-            language_code = request.form.get('language') or request.form.get('language_code') or 'hi-IN'
-            result = transcribe_audio_bytes(audio_bytes, language_code)
-            
-            # Return both 'transcript' and 'transcription' for compatibility
-            transcript_text = result.get('transcript', '')
-            return jsonify({
-                'transcript': transcript_text,
-                'transcription': transcript_text,  # Flutter expects 'transcription'
-                'confidence': result.get('confidence', 0.0),
-                'language': result.get('language', language_code)
-            }), 200
+            # Create temporary file with original extension
+            temp_path = None
+            audio = None
+            try:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as temp_file:
+                    temp_path = temp_file.name
+                    temp_file.write(audio_bytes)
+                
+                recognizer = sr.Recognizer()
+                
+                # Load audio file - speech_recognition can handle various formats
+                # but may need conversion for some formats like M4A
+                try:
+                    with sr.AudioFile(temp_path) as source:
+                        audio = recognizer.record(source)
+                except (sr.UnsupportedFormatError, OSError):
+                    # If format not supported, try converting using pydub if available
+                    try:
+                        from pydub import AudioSegment
+                        # Convert to WAV format
+                        sound = AudioSegment.from_file(temp_path)
+                        wav_path = temp_path + '.wav'
+                        sound.export(wav_path, format="wav")
+                        os.unlink(temp_path)  # Delete original
+                        temp_path = wav_path
+                        
+                        with sr.AudioFile(temp_path) as source:
+                            audio = recognizer.record(source)
+                    except ImportError:
+                        # pydub not available, try treating as raw audio
+                        raise ValidationError(f"Audio format {file_ext} not supported. Install pydub for format conversion: pip install pydub")
+                
+                if audio is None:
+                    raise ValidationError("Failed to load audio file")
+                
+                transcript = None
+                detected_language = language_code
+                
+                # Try specified language first, then try alternative
+                try:
+                    if language_code == 'hi-IN':
+                        transcript = recognizer.recognize_google(audio, language='hi-IN')
+                        detected_language = 'hi-IN'
+                    elif language_code == 'en-IN':
+                        transcript = recognizer.recognize_google(audio, language='en-IN')
+                        detected_language = 'en-IN'
+                    else:
+                        # Try Hindi first, then English
+                        try:
+                            transcript = recognizer.recognize_google(audio, language='hi-IN')
+                            detected_language = 'hi-IN'
+                        except sr.UnknownValueError:
+                            transcript = recognizer.recognize_google(audio, language='en-IN')
+                            detected_language = 'en-IN'
+                except sr.UnknownValueError:
+                    # Try alternative language
+                    if language_code == 'hi-IN':
+                        try:
+                            transcript = recognizer.recognize_google(audio, language='en-IN')
+                            detected_language = 'en-IN'
+                        except sr.UnknownValueError:
+                            raise ValidationError("Could not understand audio. Please try again.")
+                    else:
+                        try:
+                            transcript = recognizer.recognize_google(audio, language='hi-IN')
+                            detected_language = 'hi-IN'
+                        except sr.UnknownValueError:
+                            raise ValidationError("Could not understand audio. Please try again.")
+                
+                # Return both 'transcript' and 'transcription' for compatibility
+                return jsonify({
+                    'transcript': transcript,
+                    'transcription': transcript,  # Flutter expects 'transcription'
+                    'confidence': 1.0,  # speech_recognition doesn't provide confidence
+                    'language': detected_language
+                }), 200
+                
+            finally:
+                # Clean up temporary file
+                if os.path.exists(temp_path):
+                    os.unlink(temp_path)
+                    
         except ImportError:
-            # Fallback if Google Speech API not available
-            logger.warning("Google Speech API integration not available")
-            return jsonify({
-                'transcript': '',
-                'transcription': '',  # Flutter expects 'transcription'
-                'confidence': 0.0,
-                'language': 'hi-IN',
-                'error': 'Google Speech API integration not available'
-            }), 200
+            logger.error("speech_recognition library not installed")
+            raise ValidationError("Speech recognition not available. Install: pip install speechrecognition pyaudio")
+        except sr.RequestError as e:
+            logger.error(f"Speech recognition service error: {e}")
+            raise ValidationError(f"Speech recognition service error: {str(e)}. Requires internet connection.")
+        except Exception as e:
+            logger.error(f"Error transcribing audio: {e}", exc_info=True)
+            raise ValidationError(f"Failed to transcribe audio: {str(e)}")
+            
     except ValidationError:
         raise
     except Exception as e:
-        logger.error(f"Error transcribing audio: {e}", exc_info=True)
+        logger.error(f"Error in transcribe endpoint: {e}", exc_info=True)
         raise ValidationError(f"Failed to transcribe audio: {str(e)}")
 
 

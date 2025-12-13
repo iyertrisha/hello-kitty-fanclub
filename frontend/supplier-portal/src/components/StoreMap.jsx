@@ -14,18 +14,29 @@ L.Icon.Default.mergeOptions({
 const StoreMap = ({ stores, serviceAreaCenter, serviceAreaRadius, onStoreClick }) => {
   const mapRef = useRef(null);
 
+  // Filter stores that have valid locations
+  const storesWithLocations = stores.filter(store => 
+    store.location && 
+    typeof store.location.latitude === 'number' && 
+    typeof store.location.longitude === 'number' &&
+    !isNaN(store.location.latitude) &&
+    !isNaN(store.location.longitude)
+  );
+
   useEffect(() => {
-    if (mapRef.current && stores.length > 0) {
+    if (mapRef.current && storesWithLocations.length > 0) {
       const map = mapRef.current;
-      const bounds = L.latLngBounds(stores.map(s => [s.location.latitude, s.location.longitude]));
+      const bounds = L.latLngBounds(
+        storesWithLocations.map(s => [s.location.latitude, s.location.longitude])
+      );
       
-      if (serviceAreaCenter) {
+      if (serviceAreaCenter && serviceAreaCenter.latitude && serviceAreaCenter.longitude) {
         bounds.extend([serviceAreaCenter.latitude, serviceAreaCenter.longitude]);
       }
       
       map.fitBounds(bounds, { padding: [50, 50] });
     }
-  }, [stores, serviceAreaCenter]);
+  }, [storesWithLocations, serviceAreaCenter]);
 
   const getScoreColor = (score) => {
     if (score >= 700) return '#34d399';
@@ -33,11 +44,24 @@ const StoreMap = ({ stores, serviceAreaCenter, serviceAreaRadius, onStoreClick }
     return '#f87171';
   };
 
-  const center = serviceAreaCenter 
+  const center = serviceAreaCenter && serviceAreaCenter.latitude && serviceAreaCenter.longitude
     ? [serviceAreaCenter.latitude, serviceAreaCenter.longitude]
-    : stores.length > 0
-    ? [stores[0].location.latitude, stores[0].location.longitude]
+    : storesWithLocations.length > 0
+    ? [storesWithLocations[0].location.latitude, storesWithLocations[0].location.longitude]
     : [28.6139, 77.2090]; // Default: Delhi
+
+  if (storesWithLocations.length === 0) {
+    return (
+      <div className="store-map-container" style={{ height: '600px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <p>No stores with valid locations to display on the map.</p>
+          <p style={{ fontSize: '0.9em', color: '#666' }}>
+            {stores.length > 0 ? `${stores.length} store(s) found but missing location data.` : 'No stores available.'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="store-map-container">
@@ -52,7 +76,7 @@ const StoreMap = ({ stores, serviceAreaCenter, serviceAreaRadius, onStoreClick }
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
-        {serviceAreaCenter && serviceAreaRadius && (
+        {serviceAreaCenter && serviceAreaCenter.latitude && serviceAreaCenter.longitude && serviceAreaRadius && (
           <Circle
             center={[serviceAreaCenter.latitude, serviceAreaCenter.longitude]}
             radius={serviceAreaRadius * 1000}
@@ -60,7 +84,7 @@ const StoreMap = ({ stores, serviceAreaCenter, serviceAreaRadius, onStoreClick }
           />
         )}
 
-        {stores.map(store => (
+        {storesWithLocations.map(store => (
           <Marker
             key={store.id}
             position={[store.location.latitude, store.location.longitude]}

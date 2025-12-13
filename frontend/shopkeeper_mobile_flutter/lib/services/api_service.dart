@@ -27,8 +27,10 @@ class ApiService {
 
   ApiService._internal() {
     _dio.options.baseUrl = baseUrl;
-    _dio.options.connectTimeout = const Duration(seconds: 10);
-    _dio.options.receiveTimeout = const Duration(seconds: 10);
+    // Increased timeouts for better reliability, especially for audio transcription
+    _dio.options.connectTimeout = const Duration(seconds: 30);
+    _dio.options.receiveTimeout = const Duration(seconds: 60);
+    _dio.options.sendTimeout = const Duration(seconds: 60);
     
     // Add interceptors for logging
     _dio.interceptors.add(LogInterceptor(
@@ -98,9 +100,14 @@ class ApiService {
       FormData formData = FormData.fromMap(formDataMap);
 
       // IMPORTANT: Use /transactions/transcribe (not /transcribe)
+      // Audio transcription can take longer, so use extended timeouts
       Response response = await _dio.post(
         '/transactions/transcribe',
         data: formData,
+        options: Options(
+          receiveTimeout: const Duration(seconds: 120), // 2 minutes for transcription
+          sendTimeout: const Duration(seconds: 60), // 1 minute for upload
+        ),
       );
       return response.data['transcription'] ?? '';
     } catch (e) {

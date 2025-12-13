@@ -163,9 +163,12 @@ class StorageService {
   // Product methods
   Future<void> saveProduct(Product product) async {
     final db = await database;
+    // Convert boolean to int for SQLite compatibility
+    final json = product.toJson();
+    json['synced'] = (json['synced'] as bool) ? 1 : 0;
     await db.insert(
       'products',
-      product.toJson(),
+      json,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
@@ -173,7 +176,12 @@ class StorageService {
   Future<List<Product>> getProducts() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query('products', orderBy: 'createdAt DESC');
-    return List.generate(maps.length, (i) => Product.fromJson(maps[i]));
+    // Convert synced from int (0/1) to bool for SQLite compatibility
+    return List.generate(maps.length, (i) {
+      final map = Map<String, dynamic>.from(maps[i]);
+      map['synced'] = (map['synced'] as int) == 1;
+      return Product.fromJson(map);
+    });
   }
 
   Future<Product?> getProduct(String id) async {
@@ -184,14 +192,20 @@ class StorageService {
       whereArgs: [id],
     );
     if (maps.isEmpty) return null;
-    return Product.fromJson(maps.first);
+    // Convert synced from int (0/1) to bool for SQLite compatibility
+    final map = Map<String, dynamic>.from(maps.first);
+    map['synced'] = (map['synced'] as int) == 1;
+    return Product.fromJson(map);
   }
 
   Future<void> updateProduct(Product product) async {
     final db = await database;
+    // Convert boolean to int for SQLite compatibility
+    final json = product.toJson();
+    json['synced'] = (json['synced'] as bool) ? 1 : 0;
     await db.update(
       'products',
-      product.toJson(),
+      json,
       where: 'id = ?',
       whereArgs: [product.id],
     );

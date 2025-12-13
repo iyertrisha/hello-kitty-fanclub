@@ -19,6 +19,8 @@ def register_blueprints(app):
     from api.routes.grocery import grocery_bp
     from api.routes.noticeboard import noticeboard_bp
     from api.routes.supplier import supplier_bp
+    from api.routes.products import products_bp
+    from api.routes.health import health_bp
     
     # Register blueprints
     app.register_blueprint(transactions_bp, url_prefix='/api/transactions')
@@ -32,4 +34,6 @@ def register_blueprints(app):
     app.register_blueprint(grocery_bp, url_prefix='/api/grocery')
     app.register_blueprint(noticeboard_bp, url_prefix='/api/noticeboard')
     app.register_blueprint(supplier_bp, url_prefix='/api/supplier')
+    app.register_blueprint(products_bp, url_prefix='/api/products')
+    app.register_blueprint(health_bp, url_prefix='/api')
 

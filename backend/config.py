@@ -15,7 +15,9 @@ class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'a_very_secret_key')
     MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/kirana_db')
     MONGODB_DB_NAME = os.getenv('MONGODB_DB_NAME', 'kirana_db')
-    CORS_ORIGINS = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:3001').split(',')
+    # Allow all origins for Flutter app (can be restricted in production)
+    cors_origins_env = os.getenv('CORS_ORIGINS', '*')
+    CORS_ORIGINS = cors_origins_env.split(',') if cors_origins_env != '*' else ['*']
     FLASK_ENV = os.getenv('FLASK_ENV', 'development')
     FLASK_DEBUG = os.getenv('FLASK_DEBUG', 'True') == 'True'
     FLASK_PORT = int(os.getenv('FLASK_PORT', '5000'))

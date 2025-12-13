@@ -171,7 +171,8 @@ def get_all_stores(filters=None, page=1, page_size=20):
             'flagged': getattr(store, 'flagged', False),
             'flag_reason': getattr(store, 'flag_reason', None),
             'total_sales_30d': recent_sales,
-            'registered_at': store.registered_at.isoformat() if store.registered_at else None
+            'registered_at': store.registered_at.isoformat() if store.registered_at else None,
+            'location': store.location.to_dict() if store.location else None
         })
     
     return result, total_count, page, page_size

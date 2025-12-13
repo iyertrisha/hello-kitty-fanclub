@@ -35,8 +35,13 @@ def create_app(config_name='default'):
     # Initialize Flask-Session for supplier authentication
     Session(app)
     
-    # Initialize CORS
-    CORS(app, origins=app.config['CORS_ORIGINS'], supports_credentials=True)
+    # Initialize CORS - allow all origins for Flutter app
+    # In production, restrict to specific origins
+    cors_origins = app.config.get('CORS_ORIGINS', ['*'])
+    if '*' in cors_origins or len(cors_origins) == 0:
+        CORS(app, supports_credentials=True)  # Allow all origins
+    else:
+        CORS(app, origins=cors_origins, supports_credentials=True)
     
     # Connect to MongoDB
     try:

@@ -54,3 +54,8 @@ sendgrid>=6.9.0
 # QR Code generation
 qrcode[pil]>=7.4.2
 Pillow>=10.0.0
+
+# Speech recognition (for voice transcription - same as voice_demo.py)
+speechrecognition>=3.10.0
+pyaudio>=0.2.11
+pydub>=0.25.1  # For audio format conversion (M4A to WAV)
