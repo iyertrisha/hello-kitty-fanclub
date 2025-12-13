@@ -27,10 +27,25 @@ class _HomeScreenState extends State<HomeScreen> {
               // Voice Recorder Icon
               GestureDetector(
                 onTap: () {
+                  // Map language name to language code
+                  String languageCode;
+                  switch (_selectedLanguage) {
+                    case 'Hindi':
+                      languageCode = 'hi-IN';
+                      break;
+                    case 'Kannada':
+                      languageCode = 'kn-IN';
+                      break;
+                    case 'English':
+                    default:
+                      languageCode = 'en-IN';
+                      break;
+                  }
+                  
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const RecordTransactionScreen(),
+                      builder: (_) => RecordTransactionScreen(language: languageCode),
                     ),
                   );
                 },

@@ -20,8 +20,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+    _loadData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh data when screen becomes visible (e.g., when switching tabs)
+    _loadData();
+  }
+
+  void _loadData() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<TransactionProvider>().loadTransactions();
+      if (mounted) {
+        context.read<TransactionProvider>().loadTransactions();
+      }
     });
   }
 
@@ -89,28 +102,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  SizedBox(
-                    height: 150,
-                    child: GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 10,
-                      childAspectRatio: 4.5,
-                      children: [
+                  GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 0.85,
+                    children: [
                       _buildActionCard(
                         context,
                         'Record Transaction',
                         Icons.add_circle,
                         Colors.blue,
-                        () {
-                          Navigator.push(
+                        () async {
+                          final result = await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) => const RecordTransactionScreen(),
                             ),
                           );
+                          // Refresh data when returning from record screen
+                          if (result == true || mounted) {
+                            _loadData();
+                          }
                         },
                       ),
                       _buildActionCard(
@@ -170,7 +185,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         },
                       ),
                     ],
-                    ),
                   ),
                   const SizedBox(height: 24),
                   // Recent Transactions
@@ -225,8 +239,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               color: Colors.white,
                             ),
                           ),
-                          title: Text(transaction.description),
-                          subtitle: Text(formatDate(transaction.date)),
+                          title: Text(
+                            transaction.customerName ?? transaction.description,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (transaction.customerName != null && 
+                                  transaction.description != transaction.customerName)
+                                Text(
+                                  transaction.description,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[700],
+                                  ),
+                                ),
+                              Text(formatDate(transaction.date)),
+                            ],
+                          ),
                           trailing: Text(
                             '${transaction.type == 'credit' ? '+' : '-'}${formatCurrency(transaction.amount)}',
                             style: TextStyle(
@@ -256,29 +287,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
     VoidCallback onTap,
   ) {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                color.withOpacity(0.1),
+                color.withOpacity(0.05),
+              ],
+            ),
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(height: 2),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 32),
+              ),
+              const SizedBox(height: 12),
               Flexible(
                 child: Text(
                   title,
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    fontSize: 8,
-                    height: 0.95,
+                    fontSize: 13,
+                    color: Colors.grey[800],
+                    height: 1.2,
                   ),
                 ),
               ),

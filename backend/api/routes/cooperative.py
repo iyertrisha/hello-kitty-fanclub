@@ -6,6 +6,7 @@ from services.cooperative import (
     get_cooperatives,
     create_cooperative,
     join_cooperative,
+    leave_cooperative,
     get_cooperative_members,
     create_bulk_order,
     delete_cooperative,
@@ -139,6 +140,44 @@ def join_cooperative_route(coop_id):
     except Exception as e:
         logger.error(f"Error joining cooperative: {e}", exc_info=True)
         raise ValidationError(f"Failed to join cooperative: {str(e)}")
+
+
+@cooperative_bp.route('/<coop_id>/leave', methods=['POST'])
+@validate_request(required_fields=['shopkeeper_id'])
+def leave_cooperative_route(coop_id):
+    """Leave cooperative"""
+    try:
+        # Validate ObjectId formats
+        from bson.errors import InvalidId
+        from bson import ObjectId
+        try:
+            ObjectId(coop_id)
+        except InvalidId:
+            raise ValidationError(f"Invalid cooperative ID format: {coop_id}")
+        
+        data = request.validated_data
+        shopkeeper_id = data['shopkeeper_id']
+        
+        try:
+            ObjectId(shopkeeper_id)
+        except InvalidId:
+            raise ValidationError(f"Invalid shopkeeper ID format: {shopkeeper_id}")
+        
+        cooperative = leave_cooperative(coop_id, shopkeeper_id)
+        
+        return jsonify({
+            'cooperative_id': str(cooperative.id),
+            'member_count': len(cooperative.members),
+            'success': True,
+            'message': 'Successfully left cooperative'
+        }), 200
+    except NotFoundError:
+        raise
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Error leaving cooperative: {e}", exc_info=True)
+        raise ValidationError(f"Failed to leave cooperative: {str(e)}")
 
 
 @cooperative_bp.route('/<coop_id>/members', methods=['GET'])

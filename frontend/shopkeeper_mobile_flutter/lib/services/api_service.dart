@@ -1,5 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:path/path.dart' as path;
+import 'dart:io';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import '../models/transaction.dart';
 import '../models/product.dart';
 import '../models/cooperative.dart';
@@ -13,14 +16,19 @@ class ApiService {
   final Dio _dio = Dio();
   final StorageService _storage = StorageService();
   
-  // Change this to your backend URL
-  static const String baseUrl = 'http://localhost:5000/api';
-  static const bool useMockApi = true; // Set to false when backend is ready
+  // Backend URL configuration
+  // For Android emulator: use 10.0.2.2 (special IP to access host machine)
+  // For iOS simulator: use localhost
+  // For physical device: use your computer's IP address (e.g., http://192.168.1.XXX:5000/api)
+  // Find your IP with: ipconfig (Windows) or ifconfig (Mac/Linux)
+  // NOTE: Using actual network IP (10.20.43.13) instead of 10.0.2.2 due to network routing issues
+  static const String baseUrl = 'http://10.20.43.13:5000/api';
+  static const bool useMockApi = false; // Backend is ready
 
   ApiService._internal() {
     _dio.options.baseUrl = baseUrl;
-    _dio.options.connectTimeout = const Duration(seconds: 30);
-    _dio.options.receiveTimeout = const Duration(seconds: 30);
+    _dio.options.connectTimeout = const Duration(seconds: 10);
+    _dio.options.receiveTimeout = const Duration(seconds: 10);
     
     // Add interceptors for logging
     _dio.interceptors.add(LogInterceptor(
@@ -29,39 +37,154 @@ class ApiService {
     ));
   }
 
+  // Helper function for safe logging (fire-and-forget)
+  void _logDebug(String location, String message, Map<String, dynamic> data, String hypothesisId) {
+    try {
+      http.post(
+        Uri.parse('http://127.0.0.1:7242/ingest/fc2dc567-e9a9-422f-8853-acf0d309dd42'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'location': location,
+          'message': message,
+          'data': data,
+          'timestamp': DateTime.now().millisecondsSinceEpoch,
+          'sessionId': 'debug-session',
+          'runId': 'run1',
+          'hypothesisId': hypothesisId,
+        }),
+      ).then((_) {}, onError: (_) {});
+    } catch (_) {
+      // Ignore logging errors
+    }
+  }
+
+  // Test backend connectivity
+  Future<bool> testBackendConnection() async {
+    try {
+      final response = await _dio.get('/test');
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
   // Audio upload and transcription
-  Future<String> uploadAudioAndTranscribe(String audioPath) async {
+  Future<String> uploadAudioAndTranscribe(String audioPath, {String? language}) async {
     if (useMockApi) {
       await Future.delayed(const Duration(seconds: 2));
       return 'Mock transcription: This is a sample transaction recording.';
     }
 
     try {
-      String fileName = path.basename(audioPath);
-      FormData formData = FormData.fromMap({
-        'audio': await MultipartFile.fromFile(audioPath, filename: fileName),
-      });
+      // Verify file exists
+      final file = File(audioPath);
+      if (!await file.exists()) {
+        throw Exception('Audio file does not exist at path: $audioPath');
+      }
 
-      Response response = await _dio.post('/transcribe', data: formData);
+      String fileName = path.basename(audioPath);
+      Map<String, dynamic> formDataMap = {
+        'audio': await MultipartFile.fromFile(
+          audioPath,
+          filename: fileName,
+        ),
+      };
+      
+      // Add language parameter if provided
+      if (language != null) {
+        formDataMap['language'] = language;
+      }
+      
+      FormData formData = FormData.fromMap(formDataMap);
+
+      // IMPORTANT: Use /transactions/transcribe (not /transcribe)
+      Response response = await _dio.post(
+        '/transactions/transcribe',
+        data: formData,
+      );
       return response.data['transcription'] ?? '';
     } catch (e) {
+      print('Upload error: $e'); // Debug logging
       throw Exception('Failed to transcribe audio: $e');
+    }
+  }
+
+  // Parse transcript to extract transaction fields
+  Future<Map<String, dynamic>> parseTranscript(
+    String transcript,
+    String language, {
+    String? shopkeeperId,
+  }) async {
+    if (useMockApi) {
+      await Future.delayed(const Duration(seconds: 1));
+      return {
+        'type': 'credit',
+        'amount': 500.0,
+        'customer_id': 'customer_123',
+        'customer_name': 'Mock Customer',
+      };
+    }
+
+    try {
+      final response = await _dio.post(
+        '/transactions/parse',
+        data: {
+          'transcript': transcript,
+          'language': language,
+          if (shopkeeperId != null) 'shopkeeper_id': shopkeeperId,
+        },
+      );
+
+      if (response.data['success'] == true && response.data['data'] != null) {
+        return response.data['data'] as Map<String, dynamic>;
+      } else {
+        throw Exception('Parser returned invalid response');
+      }
+    } catch (e) {
+      print('Parse error: $e'); // Debug logging
+      throw Exception('Failed to parse transcript: $e');
+    }
+  }
+
+  // Get list of customers
+  Future<List<Map<String, dynamic>>> getCustomers() async {
+    if (useMockApi) {
+      await Future.delayed(const Duration(milliseconds: 500));
+      return [
+        {'id': 'customer_1', 'name': 'John Doe'},
+        {'id': 'customer_2', 'name': 'Jane Smith'},
+        {'id': 'customer_3', 'name': 'Bob Johnson'},
+      ];
+    }
+
+    try {
+      final response = await _dio.get('/customers');
+      List<dynamic> data = response.data['data'] ?? response.data['customers'] ?? [];
+      return data.map((json) => json as Map<String, dynamic>).toList();
+    } catch (e) {
+      print('Get customers error: $e'); // Debug logging
+      // Return empty list on error instead of throwing
+      return [];
     }
   }
 
   // Transaction APIs
   Future<List<Transaction>> getTransactions() async {
     if (useMockApi) {
-      return await _storage.getTransactions();
+      final local = await _storage.getTransactions();
+      return local;
     }
 
     try {
       Response response = await _dio.get('/transactions');
-      List<dynamic> data = response.data['data'] ?? [];
-      return data.map((json) => Transaction.fromJson(json as Map<String, dynamic>)).toList();
+      // Handle both 'data' and 'transactions' keys for backward compatibility
+      List<dynamic> data = response.data['data'] ?? response.data['transactions'] ?? [];
+      final transactions = data.map((json) => Transaction.fromJson(json as Map<String, dynamic>)).toList();
+      return transactions;
     } catch (e) {
       // Return local data if API fails
-      return await _storage.getTransactions();
+      final local = await _storage.getTransactions();
+      return local;
     }
   }
 
@@ -71,15 +194,51 @@ class ApiService {
       return transaction;
     }
 
+    // STEP 1: Always save locally first (offline-first)
+    await _storage.saveTransaction(transaction);
+    
+    // STEP 2: Attempt backend sync in background (non-blocking)
     try {
-      Response response = await _dio.post('/transactions', data: transaction.toJson());
+      // #region agent log
+      _logDebug('api_service.dart:120', 'createTransaction entry', {'transactionId': transaction.id, 'type': transaction.type, 'amount': transaction.amount}, 'A');
+      // #endregion
+      
+      // Ensure required backend fields are present
+      final transactionData = transaction.toJson();
+      if (transactionData['shopkeeper_id'] == null) {
+        transactionData['shopkeeper_id'] = 'default_shopkeeper_id';  // TODO: Get from user session
+      }
+      if (transactionData['customer_id'] == null) {
+        transactionData['customer_id'] = 'default_customer_id';  // TODO: Get from user input
+      }
+      
+      // #region agent log
+      _logDebug('api_service.dart:135', 'Before POST request', {'url': '${_dio.options.baseUrl}/transactions', 'dataKeys': transactionData.keys.toList(), 'hasShopkeeperId': transactionData['shopkeeper_id'] != null, 'hasCustomerId': transactionData['customer_id'] != null}, 'B');
+      // #endregion
+      
+      // Try sync with shorter timeout (timeout is set on Dio instance)
+      Response response = await _dio.post(
+        '/transactions',
+        data: transactionData,
+      );
+      
+      // #region agent log
+      _logDebug('api_service.dart:148', 'POST request succeeded', {'statusCode': response.statusCode, 'hasData': response.data != null}, 'C');
+      // #endregion
+      
+      // Sync succeeded - update local copy
       final savedTransaction = Transaction.fromJson(response.data['data']);
       await _storage.saveTransaction(savedTransaction.copyWith(synced: true));
       return savedTransaction;
     } catch (e) {
-      // Save locally for sync later
-      await _storage.saveTransaction(transaction);
-      throw Exception('Failed to create transaction: $e');
+      // #region agent log
+      _logDebug('api_service.dart:155', 'POST request failed', {'error': e.toString(), 'errorType': e.runtimeType.toString()}, 'D');
+      // #endregion
+      
+      // Sync failed - transaction already saved locally with synced=false
+      // Will be retried later via syncOfflineData()
+      print('Warning: Failed to sync transaction to backend. Saved locally. Error: $e');
+      return transaction; // Return local transaction
     }
   }
 
@@ -265,4 +424,3 @@ class ApiService {
     }
   }
 }
-

@@ -227,10 +227,14 @@ def update_transaction_status_route(transaction_id):
 def transcribe_audio_route():
     """Upload audio for transcription (calls Trisha's Google Speech API)"""
     try:
-        if 'audio_file' not in request.files:
-            raise ValidationError("No audio file provided")
-        
-        audio_file = request.files['audio_file']
+        # Accept both 'audio' (from Flutter) and 'audio_file' (backward compatibility)
+        audio_file = None
+        if 'audio' in request.files:
+            audio_file = request.files['audio']
+        elif 'audio_file' in request.files:
+            audio_file = request.files['audio_file']
+        else:
+            raise ValidationError("No audio file provided. Expected 'audio' or 'audio_file' field.")
         
         # Import Google Speech API integration (Trisha's work)
         # This will be available when Trisha completes her integration
@@ -241,12 +245,15 @@ def transcribe_audio_route():
             # Read audio file bytes
             audio_bytes = audio_file.read()
             
-            # Transcribe
-            language_code = request.form.get('language_code', 'hi-IN')
+            # Get language from form data or query params (Flutter sends as 'language' in form)
+            language_code = request.form.get('language') or request.form.get('language_code') or 'hi-IN'
             result = transcribe_audio_bytes(audio_bytes, language_code)
             
+            # Return both 'transcript' and 'transcription' for compatibility
+            transcript_text = result.get('transcript', '')
             return jsonify({
-                'transcript': result.get('transcript', ''),
+                'transcript': transcript_text,
+                'transcription': transcript_text,  # Flutter expects 'transcription'
                 'confidence': result.get('confidence', 0.0),
                 'language': result.get('language', language_code)
             }), 200
@@ -255,6 +262,7 @@ def transcribe_audio_route():
             logger.warning("Google Speech API integration not available")
             return jsonify({
                 'transcript': '',
+                'transcription': '',  # Flutter expects 'transcription'
                 'confidence': 0.0,
                 'language': 'hi-IN',
                 'error': 'Google Speech API integration not available'
@@ -264,4 +272,79 @@ def transcribe_audio_route():
     except Exception as e:
         logger.error(f"Error transcribing audio: {e}", exc_info=True)
         raise ValidationError(f"Failed to transcribe audio: {str(e)}")
+
+
+@transactions_bp.route('/parse', methods=['POST'])
+def parse_transcript_route():
+    """
+    Parse voice transcript to extract transaction details.
+    Uses voice_parser.py for Hindi, English, and Kannada support.
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            raise ValidationError("Request body is required")
+        
+        transcript = data.get('transcript')
+        if not transcript:
+            raise ValidationError("'transcript' field is required")
+        
+        language = data.get('language', 'hi-IN')
+        shopkeeper_id = data.get('shopkeeper_id')
+        
+        # Import voice parser
+        try:
+            blockchain_dir = Path(__file__).parent.parent.parent / 'blockchain'
+            sys.path.insert(0, str(blockchain_dir))
+            from voice_parser import parse_transcript
+            
+            # Parse the transcript
+            parsed_result = parse_transcript(
+                transcript=transcript,
+                language=language,
+                shopkeeper_id=shopkeeper_id,
+                customer_list=None,  # Will be fetched from database
+                product_map=None  # Will use default mapping
+            )
+            
+            # Convert amount from rupees to paise if needed (parser returns rupees)
+            # But Flutter expects rupees, so we keep it as is
+            amount = parsed_result.get('amount')
+            if amount is not None:
+                # Ensure amount is a number
+                if isinstance(amount, (int, float)):
+                    parsed_result['amount'] = float(amount)
+            
+            # Return in format Flutter expects
+            return jsonify({
+                'success': True,
+                'data': {
+                    'type': parsed_result.get('type', 'credit'),
+                    'amount': parsed_result.get('amount'),
+                    'customer_id': parsed_result.get('customer_id'),
+                    'customer_name': parsed_result.get('customer_name'),
+                    'product': parsed_result.get('product'),
+                    'quantity': parsed_result.get('quantity'),
+                    'unit': parsed_result.get('unit'),
+                    'price_per_unit': parsed_result.get('price_per_unit'),
+                    'is_buying': parsed_result.get('is_buying', False),
+                    'transaction_subtype': parsed_result.get('transaction_subtype'),
+                    'confirmation_text': parsed_result.get('confirmation_text'),
+                    'confirmation_text_hindi': parsed_result.get('confirmation_text_hindi'),
+                }
+            }), 200
+            
+        except ImportError as e:
+            logger.error(f"Failed to import voice parser: {e}", exc_info=True)
+            raise ValidationError(f"Voice parser not available: {str(e)}")
+        except Exception as e:
+            logger.error(f"Error parsing transcript: {e}", exc_info=True)
+            raise ValidationError(f"Failed to parse transcript: {str(e)}")
+            
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Error in parse endpoint: {e}", exc_info=True)
+        raise ValidationError(f"Failed to parse transcript: {str(e)}")
 

@@ -4,6 +4,8 @@ import { AuthProvider, AuthContext } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Orders from './pages/Orders';
+import OrderDetail from './pages/OrderDetail';
 import './App.css';
 
 function PrivateRoute({ children }) {
@@ -32,6 +34,22 @@ function App() {
             element={
               <PrivateRoute>
                 <Dashboard />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/orders"
+            element={
+              <PrivateRoute>
+                <Orders />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/orders/:id"
+            element={
+              <PrivateRoute>
+                <OrderDetail />
               </PrivateRoute>
             }
           />

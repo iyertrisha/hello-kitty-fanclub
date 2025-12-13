@@ -1,30 +1,34 @@
 .stats-card {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
   padding: 24px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
+  backdrop-filter: blur(10px);
 }
 
 .stats-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+  border-color: var(--border-bright);
+  box-shadow: var(--shadow-lg), var(--glow-red-sm);
+  background: var(--bg-card-hover);
 }
 
-/* Platform variant */
+/* Platform variant - Red theme */
 .stats-card.platform {
-  border-color: rgba(59, 130, 246, 0.1);
+  border-color: rgba(220, 20, 60, 0.2);
 }
 
 .stats-card.platform:hover {
-  border-color: rgba(59, 130, 246, 0.25);
-  box-shadow: 0 12px 24px rgba(59, 130, 246, 0.1);
+  border-color: rgba(255, 23, 68, 0.5);
+  box-shadow: var(--shadow-lg), var(--glow-red-md);
 }
 
 .stats-card.platform .stats-card-icon {
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(139, 0, 0, 0.2);
+  border: 1px solid rgba(220, 20, 60, 0.3);
+  color: var(--neon-red);
 }
 
 /* Aggregator variant */
@@ -75,7 +79,7 @@
 .stats-card-value {
   font-size: 32px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text-primary);
   margin-bottom: 6px;
   font-family: 'JetBrains Mono', 'SF Mono', monospace;
   letter-spacing: -1px;
@@ -83,6 +87,6 @@
 
 .stats-card-title {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-tertiary);
   font-weight: 500;
 }

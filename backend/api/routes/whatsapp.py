@@ -386,3 +386,105 @@ def send_message_route():
         logger.error(f"Error in send message route: {e}", exc_info=True)
         raise ValidationError(f"Failed to send message: {str(e)}")
 
+
+@whatsapp_bp.route('/shopkeeper-by-phone', methods=['GET'])
+@require_internal_api_key
+def get_shopkeeper_by_phone_route():
+    """Get shopkeeper by phone number (for WhatsApp bot)"""
+    try:
+        phone = request.args.get('phone')
+        if not phone:
+            raise ValidationError("Missing required parameter: phone")
+        
+        # Normalize phone number
+        if not phone.startswith('+'):
+            phone = f'+{phone.lstrip("+")}'
+        
+        try:
+            shopkeeper = Shopkeeper.objects.get(phone=phone)
+        except Shopkeeper.DoesNotExist:
+            return jsonify({
+                'shopkeeper': None,
+                'message': 'Shopkeeper not found'
+            }), 200
+        
+        return jsonify({
+            'shopkeeper': {
+                'id': str(shopkeeper.id),
+                'name': shopkeeper.name,
+                'phone': shopkeeper.phone,
+                'address': shopkeeper.address
+            }
+        }), 200
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting shopkeeper by phone: {e}", exc_info=True)
+        raise ValidationError(f"Failed to get shopkeeper: {str(e)}")
+
+
+@whatsapp_bp.route('/products', methods=['GET'])
+@require_internal_api_key
+def get_products_route():
+    """Get products for shopkeeper (for WhatsApp bot)"""
+    try:
+        shopkeeper_phone = request.args.get('shopkeeper_phone')
+        if not shopkeeper_phone:
+            raise ValidationError("Missing required parameter: shopkeeper_phone")
+        
+        # Normalize phone number
+        if not shopkeeper_phone.startswith('+'):
+            shopkeeper_phone = f'+{shopkeeper_phone.lstrip("+")}'
+        
+        # Get shopkeeper
+        try:
+            shopkeeper = Shopkeeper.objects.get(phone=shopkeeper_phone)
+        except Shopkeeper.DoesNotExist:
+            raise NotFoundError(f"Shopkeeper with phone {shopkeeper_phone} not found")
+        
+        # Get products
+        from database.models import Product
+        products = Product.objects(shopkeeper_id=shopkeeper.id).order_by('name')
+        
+        # Format for WhatsApp (text/menu format)
+        product_list = []
+        for product in products:
+            if product.stock_quantity > 0:
+                product_list.append({
+                    'id': str(product.id),
+                    'name': product.name,
+                    'price': product.price,
+                    'stock': product.stock_quantity,
+                    'category': product.category or 'General'
+                })
+        
+        # Create formatted text for WhatsApp
+        if product_list:
+            text_lines = [f"📦 *{shopkeeper.name} - Product Catalog*\n"]
+            current_category = None
+            for product in product_list:
+                if product['category'] != current_category:
+                    current_category = product['category']
+                    text_lines.append(f"\n*{current_category}*")
+                text_lines.append(
+                    f"• {product['name']} - ₹{product['price']:.2f} (Stock: {product['stock']})"
+                )
+            formatted_text = '\n'.join(text_lines)
+        else:
+            formatted_text = "No products available at the moment."
+        
+        return jsonify({
+            'shopkeeper': {
+                'id': str(shopkeeper.id),
+                'name': shopkeeper.name
+            },
+            'products': product_list,
+            'formatted_text': formatted_text
+        }), 200
+    except NotFoundError:
+        raise
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting products: {e}", exc_info=True)
+        raise ValidationError(f"Failed to get products: {str(e)}")

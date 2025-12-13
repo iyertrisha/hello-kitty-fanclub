@@ -57,8 +57,10 @@ def get_blockchain_service() -> BlockchainService:
         BlockchainConfig.validate(require_contract=True)
         
         # Initialize blockchain service
+        # FIXED: Use POLYGON_AMOY_RPC_URL instead of RPC_URL to match blockchain routes
+        rpc_url = BlockchainConfig.POLYGON_AMOY_RPC_URL or BlockchainConfig.RPC_URL
         _blockchain_service = BlockchainService(
-            rpc_url=BlockchainConfig.RPC_URL,
+            rpc_url=rpc_url,
             private_key=BlockchainConfig.PRIVATE_KEY,
             contract_address=BlockchainConfig.CONTRACT_ADDRESS
         )
@@ -67,8 +69,9 @@ def get_blockchain_service() -> BlockchainService:
         return _blockchain_service
         
     except Exception as e:
-        logger.warning(f"Failed to initialize blockchain service: {e}. "
-                      f"Transactions will be stored in MongoDB only.")
+        logger.error(f"Failed to initialize blockchain service: {e}. "
+                     f"Transactions will be stored in MongoDB only.")
+        # FIXED: Still return None but log as error, not warning
         return None
 
 

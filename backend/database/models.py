@@ -276,8 +276,9 @@ class SupplierOrder(Document):
 
 
 class OTPVerification(Document):
-    """OTP verification model for email-based authentication"""
-    email = StringField(required=True, max_length=200)
+    """OTP verification model for email or phone-based authentication"""
+    email = StringField(max_length=200)  # Optional - for supplier email OTP
+    phone = StringField(max_length=20)  # Optional - for shopkeeper phone OTP
     otp_code = StringField(required=True, max_length=6)
     expires_at = DateTimeField(required=True)
     used = BooleanField(default=False)
@@ -287,7 +288,9 @@ class OTPVerification(Document):
         'collection': 'otp_verifications',
         'indexes': [
             'email',
+            'phone',
             'expires_at',
-            ('email', 'expires_at')
+            ('email', 'expires_at'),
+            ('phone', 'expires_at')
         ]
     }

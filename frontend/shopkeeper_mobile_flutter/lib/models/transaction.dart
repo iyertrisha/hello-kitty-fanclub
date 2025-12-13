@@ -8,6 +8,9 @@ class Transaction {
   final String? transcription;
   final bool synced;
   final String? cooperativeId;
+  final String? shopkeeperId;
+  final String? customerId;
+  final String? customerName;
 
   Transaction({
     required this.id,
@@ -19,6 +22,9 @@ class Transaction {
     this.transcription,
     this.synced = false,
     this.cooperativeId,
+    this.shopkeeperId,
+    this.customerId,
+    this.customerName,
   });
 
   Map<String, dynamic> toJson() {
@@ -32,20 +38,36 @@ class Transaction {
       'transcription': transcription,
       'synced': synced,
       'cooperativeId': cooperativeId,
+      'shopkeeper_id': shopkeeperId,
+      'customer_id': customerId,
+      'customer_name': customerName,
     };
   }
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
+    // Handle both 'date' and 'timestamp' fields
+    DateTime dateTime;
+    if (json['date'] != null) {
+      dateTime = DateTime.parse(json['date']);
+    } else if (json['timestamp'] != null) {
+      dateTime = DateTime.parse(json['timestamp']);
+    } else {
+      dateTime = DateTime.now(); // Fallback to current time
+    }
+    
     return Transaction(
       id: json['id'] ?? '',
       type: json['type'] ?? 'debit',
       amount: (json['amount'] ?? 0).toDouble(),
       description: json['description'] ?? '',
-      date: DateTime.parse(json['date']),
+      date: dateTime,
       audioPath: json['audioPath'],
       transcription: json['transcription'],
-      synced: json['synced'] ?? false,
+      synced: json['synced'] is bool ? json['synced'] : (json['synced'] == 1 || json['synced'] == true),
       cooperativeId: json['cooperativeId'],
+      shopkeeperId: json['shopkeeper_id'] ?? json['shopkeeperId'],
+      customerId: json['customer_id'] ?? json['customerId'],
+      customerName: json['customer_name'] ?? json['customerName'],
     );
   }
 
@@ -59,6 +81,9 @@ class Transaction {
     String? transcription,
     bool? synced,
     String? cooperativeId,
+    String? shopkeeperId,
+    String? customerId,
+    String? customerName,
   }) {
     return Transaction(
       id: id ?? this.id,
@@ -70,7 +95,9 @@ class Transaction {
       transcription: transcription ?? this.transcription,
       synced: synced ?? this.synced,
       cooperativeId: cooperativeId ?? this.cooperativeId,
+      shopkeeperId: shopkeeperId ?? this.shopkeeperId,
+      customerId: customerId ?? this.customerId,
+      customerName: customerName ?? this.customerName,
     );
   }
 }
-

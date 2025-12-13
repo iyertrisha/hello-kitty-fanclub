@@ -16,11 +16,12 @@
 .loading-spinner {
   width: 48px;
   height: 48px;
-  border: 3px solid rgba(59, 130, 246, 0.2);
-  border-top-color: #3b82f6;
+  border: 3px solid rgba(139, 0, 0, 0.2);
+  border-top-color: var(--neon-red);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 16px;
+  box-shadow: var(--glow-red-sm);
 }
 
 @keyframes spin {
@@ -41,14 +42,15 @@
 .page-title {
   font-size: 32px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text-primary);
   margin-bottom: 8px;
   letter-spacing: -0.5px;
+  text-shadow: 0 0 20px rgba(255, 23, 68, 0.3);
 }
 
 .page-subtitle {
   font-size: 15px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-tertiary);
 }
 
 .read-only-badge {
@@ -56,12 +58,13 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.25);
+  background: rgba(139, 0, 0, 0.2);
+  border: 1px solid rgba(220, 20, 60, 0.3);
   border-radius: 20px;
   font-size: 13px;
   font-weight: 600;
-  color: #60a5fa;
+  color: var(--neon-red);
+  box-shadow: var(--glow-red-sm);
 }
 
 .badge-icon {
@@ -86,21 +89,24 @@
 }
 
 .alert-warning {
-  background: rgba(251, 191, 36, 0.1);
-  border: 1px solid rgba(251, 191, 36, 0.25);
-  color: #fbbf24;
+  background: rgba(255, 184, 53, 0.1);
+  border: 1px solid rgba(255, 140, 66, 0.3);
+  color: var(--orange-medium);
+  box-shadow: var(--glow-orange-sm);
 }
 
 .alert-error {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  color: #f87171;
+  background: rgba(220, 20, 60, 0.15);
+  border: 1px solid rgba(255, 23, 68, 0.4);
+  color: var(--neon-red);
+  box-shadow: var(--glow-red-sm);
 }
 
 .alert-info {
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.25);
-  color: #60a5fa;
+  background: rgba(255, 140, 66, 0.1);
+  border: 1px solid rgba(255, 140, 66, 0.3);
+  color: var(--orange-subtle);
+  box-shadow: var(--glow-orange-sm);
 }
 
 .alert-icon {
@@ -142,38 +148,41 @@
 .section-title {
   font-size: 18px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .read-only-indicator {
   font-size: 12px;
-  color: rgba(59, 130, 246, 0.7);
+  color: var(--neon-red);
   padding: 4px 12px;
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(139, 0, 0, 0.2);
+  border: 1px solid rgba(220, 20, 60, 0.3);
   border-radius: 12px;
 }
 
 .activity-count {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-muted);
 }
 
 /* Chart Section */
 .chart-section {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
   padding: 24px;
   margin-bottom: 32px;
+  backdrop-filter: blur(10px);
 }
 
 /* Activity Section */
 .activity-section {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
   padding: 24px;
   margin-bottom: 32px;
+  backdrop-filter: blur(10px);
 }
 
 .activity-list {
@@ -189,11 +198,13 @@
   padding: 14px 16px;
   background: rgba(255, 255, 255, 0.02);
   border-radius: 12px;
-  transition: background 0.2s;
+  transition: all 0.2s;
+  border: 1px solid transparent;
 }
 
 .activity-item:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(139, 0, 0, 0.1);
+  border-color: rgba(220, 20, 60, 0.2);
 }
 
 .activity-icon {
@@ -203,8 +214,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(139, 0, 0, 0.2);
+  border: 1px solid rgba(220, 20, 60, 0.3);
   border-radius: 10px;
+  color: var(--neon-red);
 }
 
 .activity-content {
@@ -213,14 +226,14 @@
 
 .activity-text {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--text-secondary);
   margin-bottom: 4px;
   line-height: 1.5;
 }
 
 .activity-time {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-muted);
 }
 
 .empty-state {
@@ -229,7 +242,7 @@
   align-items: center;
   justify-content: center;
   padding: 48px;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-muted);
 }
 
 .empty-icon {
@@ -240,10 +253,11 @@
 
 /* Health Section */
 .health-section {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
   padding: 24px;
+  backdrop-filter: blur(10px);
 }
 
 .health-grid {
@@ -276,28 +290,28 @@
 }
 
 .health-indicator.healthy {
-  background: #34d399;
+  background: rgba(52, 211, 153, 0.8);
   box-shadow: 0 0 12px rgba(52, 211, 153, 0.5);
 }
 
 .health-indicator.warning {
-  background: #fbbf24;
-  box-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
+  background: var(--orange-medium);
+  box-shadow: var(--glow-orange-sm);
 }
 
 .health-indicator.error {
-  background: #f87171;
-  box-shadow: 0 0 12px rgba(248, 113, 113, 0.5);
+  background: var(--neon-red);
+  box-shadow: var(--glow-red-md);
 }
 
 .health-label {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-tertiary);
 }
 
 .health-status {
   font-size: 14px;
   font-weight: 600;
-  color: #34d399;
+  color: rgba(52, 211, 153, 0.9);
 }
 

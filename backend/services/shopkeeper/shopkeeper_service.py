@@ -306,3 +306,35 @@ def toggle_shopkeeper_status(shopkeeper_id):
     
     return shopkeeper
 
+
+def get_or_create_shopkeeper(phone):
+    """
+    Get existing shopkeeper by phone or create new one (for first-time OTP login)
+    
+    Args:
+        phone: Shopkeeper phone number
+    
+    Returns:
+        Shopkeeper: Shopkeeper object
+    
+    Raises:
+        ValidationError: If shopkeeper exists but is inactive
+    """
+    # Normalize phone number
+    if not phone.startswith('+'):
+        phone = f'+{phone.lstrip("+")}'
+    
+    try:
+        shopkeeper = Shopkeeper.objects.get(phone=phone)
+        if not shopkeeper.is_active:
+            raise ValidationError("Shopkeeper account is inactive")
+        return shopkeeper
+    except Shopkeeper.DoesNotExist:
+        # Don't auto-create shopkeeper - they need to complete registration with wallet address
+        raise NotFoundError(f"Shopkeeper with phone {phone} not found. Please complete registration first.")
+    except Shopkeeper.MultipleObjectsReturned:
+        # Should not happen with unique phone constraint, but handle it
+        shopkeeper = Shopkeeper.objects(phone=phone).first()
+        if not shopkeeper.is_active:
+            raise ValidationError("Shopkeeper account is inactive")
+        return shopkeeper

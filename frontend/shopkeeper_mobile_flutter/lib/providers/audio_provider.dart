@@ -46,14 +46,14 @@ class AudioProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> transcribeAudio() async {
+  Future<void> transcribeAudio({String? language}) async {
     if (_recordingPath == null) return;
 
     _isTranscribing = true;
     notifyListeners();
 
     try {
-      _transcription = await _apiService.uploadAudioAndTranscribe(_recordingPath!);
+      _transcription = await _apiService.uploadAudioAndTranscribe(_recordingPath!, language: language);
     } catch (e) {
       rethrow;
     } finally {

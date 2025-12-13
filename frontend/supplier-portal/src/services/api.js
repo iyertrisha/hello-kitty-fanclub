@@ -81,6 +81,42 @@ export const supplierApi = {
     const response = await api.get('/supplier/orders');
     return response.data;
   },
+
+  getOrder: async (orderId) => {
+    const response = await api.get(`/supplier/orders/${orderId}`);
+    return response.data;
+  },
+
+  updateOrderStatus: async (orderId, status) => {
+    const response = await api.put(`/supplier/orders/${orderId}/status`, { status });
+    return response.data;
+  },
+
+  cancelOrder: async (orderId) => {
+    const response = await api.delete(`/supplier/orders/${orderId}`);
+    return response.data;
+  },
+
+  // Analytics
+  getAnalyticsOverview: async () => {
+    const response = await api.get('/supplier/analytics/overview');
+    return response.data;
+  },
+
+  getAnalyticsOrders: async (dateRange) => {
+    const response = await api.get('/supplier/analytics/orders', { params: dateRange });
+    return response.data;
+  },
+
+  getAnalyticsStores: async () => {
+    const response = await api.get('/supplier/analytics/stores');
+    return response.data;
+  },
+
+  getAnalyticsRevenue: async (dateRange) => {
+    const response = await api.get('/supplier/analytics/revenue', { params: dateRange });
+    return response.data;
+  },
 };
 
 export default api;

@@ -3,6 +3,7 @@ Flask API application package
 """
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_session import Session
 from mongoengine import connect, disconnect
 import logging
 from config import config
@@ -31,17 +32,39 @@ def create_app(config_name='default'):
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
     
+    # Initialize Flask-Session for supplier authentication
+    Session(app)
+    
     # Initialize CORS
     CORS(app, origins=app.config['CORS_ORIGINS'], supports_credentials=True)
     
     # Connect to MongoDB
     try:
-        connect(
-            db=app.config['MONGODB_DB_NAME'],
-            host=app.config['MONGODB_URI'],
-            alias='default'
-        )
-        logger.info(f"✅ Connected to MongoDB: {app.config['MONGODB_DB_NAME']}")
+        # Parse MongoDB URI to extract database name if present
+        mongodb_uri = app.config['MONGODB_URI']
+        db_name = app.config['MONGODB_DB_NAME']
+        
+        # If URI contains database name, use it and don't pass db parameter
+        # Otherwise use separate db parameter
+        if '/' in mongodb_uri.split('?')[0].split('@')[-1]:
+            # URI contains database name
+            connect(
+                host=mongodb_uri,
+                alias='default'
+            )
+        else:
+            # URI doesn't contain database name, use separate parameter
+            connect(
+                db=db_name,
+                host=mongodb_uri,
+                alias='default'
+            )
+        
+        # FIXED: Validate connection by actually testing it
+        from mongoengine import get_db
+        db = get_db(alias='default')
+        server_info = db.client.server_info()
+        logger.info(f"✅ Connected to MongoDB: {db_name} (server version: {server_info.get('version', 'unknown')})")
     except Exception as e:
         logger.error(f"❌ Failed to connect to MongoDB: {e}")
         raise
@@ -89,6 +112,18 @@ def create_app(config_name='default'):
     def close_db(error):
         """Close database connection on app teardown"""
         pass  # MongoEngine handles connection pooling
+    
+    # FIXED: Add shutdown handler to properly disconnect MongoDB
+    import atexit
+    def cleanup_mongodb():
+        """Cleanup MongoDB connection on app shutdown"""
+        try:
+            disconnect(alias='default')
+            logger.info("✅ Disconnected from MongoDB on shutdown")
+        except Exception as e:
+            logger.warning(f"⚠️ Error disconnecting from MongoDB: {e}")
+    
+    atexit.register(cleanup_mongodb)
     
     logger.info("✅ Flask application initialized successfully")
     

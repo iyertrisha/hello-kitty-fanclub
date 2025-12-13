@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from datetime import datetime, timedelta
 import random
-from database.models import Shopkeeper, Customer, Product, Transaction, Cooperative, Location
+from database.models import Shopkeeper, Customer, Product, Transaction, Cooperative, Location, Supplier, SupplierOrder
 from mongoengine import connect
 from config import Config
 import logging
@@ -22,23 +22,40 @@ def seed_shopkeepers(count=8):
     """Seed shopkeepers"""
     shopkeepers = []
     
-    # Sample shopkeeper data
+    # Sample shopkeeper data - Mostly in Delhi area for supplier portal testing
+    # Delhi coordinates: 28.6139, 77.2090 (Connaught Place)
     shopkeeper_data = [
-        {'name': 'Rajesh Kirana Store', 'address': '123 Main Street, Mumbai', 'phone': '+919876543210', 'wallet': '0x1111111111111111111111111111111111111111'},
-        {'name': 'Priya Grocery', 'address': '456 Market Road, Delhi', 'phone': '+919876543211', 'wallet': '0x2222222222222222222222222222222222222222'},
-        {'name': 'Amit General Store', 'address': '789 Commercial Area, Bangalore', 'phone': '+919876543212', 'wallet': '0x3333333333333333333333333333333333333333'},
-        {'name': 'Sunita Provision Store', 'address': '321 Residential Colony, Pune', 'phone': '+919876543213', 'wallet': '0x4444444444444444444444444444444444444444'},
-        {'name': 'Vikram Kirana', 'address': '654 High Street, Hyderabad', 'phone': '+919876543214', 'wallet': '0x5555555555555555555555555555555555555555'},
-        {'name': 'Meera Groceries', 'address': '987 Shopping Complex, Chennai', 'phone': '+919876543215', 'wallet': '0x6666666666666666666666666666666666666666'},
-        {'name': 'Kumar Store', 'address': '147 Village Road, Ahmedabad', 'phone': '+919876543216', 'wallet': '0x7777777777777777777777777777777777777777'},
-        {'name': 'Lakshmi Kirana', 'address': '258 Town Center, Kolkata', 'phone': '+919876543217', 'wallet': '0x8888888888888888888888888888888888888888'},
+        {'name': 'Rajesh Kirana Store', 'address': '123 Main Street, Connaught Place, Delhi', 'phone': '+919876543210', 'wallet': '0x1111111111111111111111111111111111111111', 'lat': 28.6300, 'lng': 77.2170},
+        {'name': 'Priya Grocery', 'address': '456 Market Road, Karol Bagh, Delhi', 'phone': '+919876543211', 'wallet': '0x2222222222222222222222222222222222222222', 'lat': 28.6500, 'lng': 77.1950},
+        {'name': 'Amit General Store', 'address': '789 Commercial Area, Lajpat Nagar, Delhi', 'phone': '+919876543212', 'wallet': '0x3333333333333333333333333333333333333333', 'lat': 28.5680, 'lng': 77.2430},
+        {'name': 'Sunita Provision Store', 'address': '321 Residential Colony, Janakpuri, Delhi', 'phone': '+919876543213', 'wallet': '0x4444444444444444444444444444444444444444', 'lat': 28.6300, 'lng': 77.0880},
+        {'name': 'Vikram Kirana', 'address': '654 High Street, Rohini, Delhi', 'phone': '+919876543214', 'wallet': '0x5555555555555555555555555555555555555555', 'lat': 28.7400, 'lng': 77.1200},
+        {'name': 'Meera Groceries', 'address': '987 Shopping Complex, Dwarka, Delhi', 'phone': '+919876543215', 'wallet': '0x6666666666666666666666666666666666666666', 'lat': 28.5900, 'lng': 77.0460},
+        {'name': 'Kumar Store', 'address': '147 Village Road, Saket, Delhi', 'phone': '+919876543216', 'wallet': '0x7777777777777777777777777777777777777777', 'lat': 28.5240, 'lng': 77.2060},
+        {'name': 'Lakshmi Kirana', 'address': '258 Town Center, Chandni Chowk, Delhi', 'phone': '+919876543217', 'wallet': '0x8888888888888888888888888888888888888888', 'lat': 28.6510, 'lng': 77.2310},
     ]
     
     for i, data in enumerate(shopkeeper_data[:count]):
         # Check if already exists
-        if Shopkeeper.objects(wallet_address=data['wallet']).first():
-            logger.info(f"Shopkeeper {data['name']} already exists, skipping")
-            shopkeeper = Shopkeeper.objects(wallet_address=data['wallet']).first()
+        existing = Shopkeeper.objects(wallet_address=data['wallet']).first()
+        if existing:
+            logger.info(f"Shopkeeper {data['name']} already exists, updating location to Delhi area")
+            shopkeeper = existing
+            # Update location to Delhi area if it's in Mumbai
+            if shopkeeper.location and (shopkeeper.location.latitude < 19.5 or shopkeeper.location.latitude > 19.6):
+                # Already in Delhi or other area, skip update
+                pass
+            else:
+                # Update to Delhi coordinates
+                base_lat = data.get('lat', 28.6139)
+                base_lng = data.get('lng', 77.2090)
+                shopkeeper.location = Location(
+                    latitude=base_lat + random.uniform(-0.02, 0.02),
+                    longitude=base_lng + random.uniform(-0.02, 0.02),
+                    address=data['address']
+                )
+                shopkeeper.save()
+                logger.info(f"Updated {shopkeeper.name} location to Delhi area")
         else:
             shopkeeper = Shopkeeper(
                 name=data['name'],
@@ -51,10 +68,12 @@ def seed_shopkeepers(count=8):
                 registered_at=datetime.utcnow() - timedelta(days=random.randint(30, 365))
             )
             
-            # Add location (Mumbai area coordinates)
+            # Add location (Delhi area coordinates - with slight variation)
+            base_lat = data.get('lat', 28.6139)  # Default to Connaught Place if not specified
+            base_lng = data.get('lng', 77.2090)
             shopkeeper.location = Location(
-                latitude=19.0760 + random.uniform(-0.1, 0.1),
-                longitude=72.8777 + random.uniform(-0.1, 0.1),
+                latitude=base_lat + random.uniform(-0.02, 0.02),  # Small variation
+                longitude=base_lng + random.uniform(-0.02, 0.02),
                 address=data['address']
             )
             

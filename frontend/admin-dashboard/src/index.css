@@ -11,8 +11,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: #0a0f1c;
-  color: #ffffff;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   min-height: 100vh;
 }
 
@@ -20,40 +20,133 @@ code {
   font-family: 'JetBrains Mono', source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
-/* CSS Variables */
+/* CSS Variables - Stranger Things Theme */
 :root {
-  /* Platform Admin Colors */
-  --platform-primary: #3b82f6;
-  --platform-primary-light: #60a5fa;
-  --platform-bg: #0a0f1c;
-  --platform-sidebar: #0d1221;
+  /* ========================================
+     STRANGER THINGS INSPIRED COLOR PALETTE
+     ======================================== */
+  
+  /* Primary Colors - Deep Crimson */
+  --crimson-dark: #4B0000;
+  --crimson-base: #8B0000;
+  --crimson-medium: #A52A2A;
+  --crimson-bright: #DC143C;
+  
+  /* Neon Red Glow */
+  --neon-red: #FF1744;
+  --neon-red-glow: #FF0000;
+  --glow-red-subtle: rgba(255, 23, 68, 0.15);
+  --glow-red-medium: rgba(255, 23, 68, 0.3);
+  --glow-red-strong: rgba(255, 0, 0, 0.4);
+  
+  /* Dark Maroon */
+  --maroon-dark: #4B0000;
+  --maroon-base: #800020;
+  
+  /* Charcoal Black */
+  --black-charcoal: #0a0a0a;
+  --black-dark: #1a1a1a;
+  --black-medium: #2a1a1a;
+  
+  /* Dark Navy / Midnight Blue */
+  --navy-midnight: #0a0e1a;
+  --navy-dark: #1a1f2a;
+  
+  /* Orange Accents */
+  --orange-subtle: #FF8C42;
+  --orange-medium: #FF6B35;
+  
+  /* ========================================
+     BACKGROUND COLORS
+     ======================================== */
+  
+  /* Main Backgrounds */
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #1a0a0a;
+  --bg-tertiary: #1a1a1a;
+  --bg-card: rgba(26, 10, 10, 0.6);
+  --bg-card-hover: rgba(139, 0, 0, 0.2);
+  
+  /* Sidebar */
+  --sidebar-bg: linear-gradient(180deg, #1a0a0a 0%, #0a0a0a 100%);
+  --sidebar-border: rgba(220, 20, 60, 0.15);
+  
+  /* Navbar */
+  --navbar-bg: rgba(26, 10, 10, 0.95);
+  --navbar-border: rgba(220, 20, 60, 0.1);
+  
+  /* Platform Admin Colors (Stranger Things Theme) */
+  --platform-primary: #DC143C;
+  --platform-primary-light: #FF1744;
+  --platform-bg: #0a0a0a;
+  --platform-sidebar: #1a0a0a;
 
-  /* Aggregator Colors */
+  /* Aggregator Colors (Maintained for compatibility) */
   --aggregator-primary: #10b981;
   --aggregator-primary-light: #34d399;
   --aggregator-bg: #071108;
   --aggregator-sidebar: #0a1a0d;
 
-  /* Shared Colors */
-  --success: #34d399;
-  --warning: #fbbf24;
-  --error: #f87171;
-  --info: #60a5fa;
+  /* ========================================
+     TEXT COLORS
+     ======================================== */
+  
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.75);
+  --text-tertiary: rgba(255, 255, 255, 0.55);
+  --text-muted: rgba(255, 255, 255, 0.4);
+  --text-accent: #FF1744;
+  --text-accent-orange: #FF8C42;
+
+  /* ========================================
+     STATUS COLORS (Maintaining Accessibility)
+     ======================================== */
+  
+  --success: rgba(52, 211, 153, 0.8);
+  --warning: rgba(255, 184, 53, 0.8);
+  --error: #FF1744;
+  --info: rgba(255, 140, 66, 0.8);
 
   /* Vishwas Score Colors */
-  --score-excellent: #34d399;
-  --score-good: #fbbf24;
-  --score-attention: #f87171;
+  --score-excellent: rgba(52, 211, 153, 0.8);
+  --score-good: rgba(255, 184, 53, 0.8);
+  --score-attention: #FF1744;
 
-  /* Text Colors */
-  --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --text-tertiary: rgba(255, 255, 255, 0.5);
-  --text-muted: rgba(255, 255, 255, 0.35);
+  /* ========================================
+     BORDER COLORS
+     ======================================== */
+  
+  --border-light: rgba(220, 20, 60, 0.08);
+  --border-medium: rgba(220, 20, 60, 0.15);
+  --border-bright: rgba(255, 23, 68, 0.3);
+  --border-glow: rgba(255, 0, 0, 0.25);
 
-  /* Border Colors */
-  --border-light: rgba(255, 255, 255, 0.06);
-  --border-medium: rgba(255, 255, 255, 0.1);
+  /* ========================================
+     BUTTON COLORS
+     ======================================== */
+  
+  /* Primary Button */
+  --btn-primary-bg: rgba(139, 0, 0, 0.3);
+  --btn-primary-border: rgba(220, 20, 60, 0.4);
+  --btn-primary-text: #ffffff;
+  --btn-primary-hover-bg: rgba(139, 0, 0, 0.5);
+  --btn-primary-hover-border: rgba(255, 23, 68, 0.6);
+  --btn-primary-hover-glow: 0 0 12px rgba(255, 23, 68, 0.4);
+  
+  /* Danger Button */
+  --btn-danger-bg: rgba(220, 20, 60, 0.2);
+  --btn-danger-border: rgba(255, 23, 68, 0.5);
+  --btn-danger-text: #FF1744;
+  --btn-danger-hover-bg: rgba(220, 20, 60, 0.35);
+  --btn-danger-hover-border: rgba(255, 0, 0, 0.7);
+  --btn-danger-hover-glow: 0 0 16px rgba(255, 0, 0, 0.5);
+  
+  /* Secondary Button */
+  --btn-secondary-bg: rgba(255, 255, 255, 0.05);
+  --btn-secondary-border: rgba(255, 255, 255, 0.1);
+  --btn-secondary-text: rgba(255, 255, 255, 0.85);
+  --btn-secondary-hover-bg: rgba(255, 255, 255, 0.08);
+  --btn-secondary-hover-border: rgba(220, 20, 60, 0.25);
 
   /* Spacing */
   --spacing-xs: 4px;
@@ -69,11 +162,17 @@ code {
   --radius-xl: 20px;
   --radius-full: 9999px;
 
-  /* Shadows */
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
-  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.3);
+  /* Shadows & Glows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.7);
+  
+  /* Neon Glows */
+  --glow-red-sm: 0 0 8px rgba(255, 23, 68, 0.3);
+  --glow-red-md: 0 0 16px rgba(255, 23, 68, 0.4);
+  --glow-red-lg: 0 0 24px rgba(255, 0, 0, 0.5);
+  --glow-orange-sm: 0 0 8px rgba(255, 140, 66, 0.2);
 }
 
 /* Utility Classes */

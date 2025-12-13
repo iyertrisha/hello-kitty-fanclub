@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { supplierApi } from '../services/api';
 import StoreCard from '../components/StoreCard';
@@ -9,6 +10,7 @@ import './Dashboard.css';
 
 const Dashboard = () => {
   const { supplier, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('list'); // 'list' or 'map'
@@ -93,6 +95,9 @@ const Dashboard = () => {
         <div className="header-content">
           <h1>Supplier Portal</h1>
           <div className="header-actions">
+            <button onClick={() => navigate('/orders')} className="btn-secondary">
+              Orders
+            </button>
             <span className="supplier-name">{supplier.name}</span>
             <button onClick={() => setShowServiceAreaModal(true)} className="btn-secondary">
               Set Service Area
@@ -152,7 +157,7 @@ const Dashboard = () => {
             <div className="stats-bar">
               <div className="stat">
                 <span className="stat-label">Total Stores</span>
-                <span className="stat-value">{filteredStores.length}</span>
+                <span className="stat-value">{stores.length}</span>
               </div>
               <div className="stat">
                 <span className="stat-label">Low Stock Stores</span>

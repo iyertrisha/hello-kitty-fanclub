@@ -189,6 +189,42 @@ def join_cooperative(coop_id, shopkeeper_id):
     return cooperative
 
 
+def leave_cooperative(coop_id, shopkeeper_id):
+    """
+    Leave cooperative (remove shopkeeper from members)
+    
+    Args:
+        coop_id: Cooperative ID
+        shopkeeper_id: Shopkeeper ID
+    
+    Returns:
+        Cooperative: Updated cooperative object
+    """
+    try:
+        from bson.errors import InvalidId
+        cooperative = Cooperative.objects.get(id=coop_id)
+    except (Cooperative.DoesNotExist, InvalidId):
+        raise NotFoundError(f"Cooperative {coop_id} not found")
+    
+    try:
+        from bson.errors import InvalidId
+        shopkeeper = Shopkeeper.objects.get(id=shopkeeper_id)
+    except (Shopkeeper.DoesNotExist, InvalidId):
+        raise NotFoundError(f"Shopkeeper {shopkeeper_id} not found")
+    
+    # Check if shopkeeper is a member
+    if shopkeeper not in cooperative.members:
+        raise ValidationError("Shopkeeper is not a member of this cooperative")
+    
+    # Remove from members list
+    cooperative.members.remove(shopkeeper)
+    cooperative.save()
+    
+    logger.info(f"Shopkeeper {shopkeeper_id} left cooperative {coop_id}")
+    
+    return cooperative
+
+
 def get_cooperative_members(coop_id):
     """
     Get cooperative members

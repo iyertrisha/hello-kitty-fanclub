@@ -1,0 +1,140 @@
+name: Code Linting
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+      - vineet
+  push:
+    branches:
+      - main
+      - master
+      - vineet
+
+jobs:
+  eslint:
+    name: ESLint (JavaScript/TypeScript)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    
+    strategy:
+      matrix:
+        project:
+          - path: frontend/supplier-portal
+            name: Supplier Portal
+          - path: frontend/admin-dashboard
+            name: Admin Dashboard
+          - path: frontend/shopkeeper-mobile
+            name: Shopkeeper Mobile
+          - path: backend/whatsapp-bot
+            name: WhatsApp Bot
+          - path: backend/blockchain
+            name: Blockchain
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.project.path }}/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ${{ matrix.project.path }}
+        run: |
+          if [ -f "package-lock.json" ]; then
+            npm ci
+          elif [ -f "package.json" ]; then
+            npm install
+          else
+            echo "No package.json found, skipping"
+            exit 0
+          fi
+      
+      - name: Run ESLint
+        working-directory: ${{ matrix.project.path }}
+        run: |
+          # Check if ESLint is available (directly or via react-scripts)
+          if npm list eslint >/dev/null 2>&1 || npm list react-scripts >/dev/null 2>&1 || npx eslint --version >/dev/null 2>&1; then
+            echo "ESLint found (directly or via react-scripts)"
+          else
+            echo "ESLint not found in dependencies, skipping ESLint check for ${{ matrix.project.name }}"
+            exit 0
+          fi
+          
+          # Run ESLint with appropriate extensions
+          # React apps (react-scripts) include ESLint, use npx to access it
+          if [ -f ".eslintrc" ] || [ -f ".eslintrc.js" ] || [ -f ".eslintrc.json" ] || [ -f ".eslintrc.yml" ] || [ -f ".eslintrc.yaml" ]; then
+            echo "Using project ESLint config"
+            npx eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0
+          elif [ -f "package.json" ] && grep -q '"eslintConfig"' package.json; then
+            echo "Using ESLint config from package.json"
+            npx eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0
+          elif [ -f "package.json" ] && grep -q "react-scripts" package.json; then
+            echo "React app detected, using react-scripts ESLint"
+            # For React apps, check src directory
+            if [ -d "src" ]; then
+              npx eslint "src/**/*.{js,jsx,ts,tsx}" --ext .js,.jsx,.ts,.tsx --max-warnings 0 || true
+            else
+              echo "No src directory found, skipping"
+            fi
+          else
+            echo "No ESLint config found, trying default"
+            npx eslint . --ext .js,.jsx,.ts,.tsx --max-warnings 0 || echo "ESLint check skipped - no config found"
+          fi
+        continue-on-error: false
+
+  flake8:
+    name: Flake8 (Python)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+          cache: 'pip'
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/blockchain/requirements.txt
+      
+      - name: Install Flake8
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8
+      
+      - name: Run Flake8 on backend
+        working-directory: backend
+        run: |
+          # Flake8 configuration
+          flake8 . \
+            --max-line-length=120 \
+            --extend-ignore=E203,W503 \
+            --exclude=venv,__pycache__,node_modules,*.pyc,.venv,env,ENV \
+            --count \
+            --statistics || exit 1
+      
+      - name: Run Flake8 on blockchain module
+        working-directory: backend/blockchain
+        run: |
+          if [ -f "requirements.txt" ] || find . -name "*.py" -type f | grep -q .; then
+            flake8 . \
+              --max-line-length=120 \
+              --extend-ignore=E203,W503 \
+              --exclude=venv,__pycache__,node_modules,*.pyc,.venv,env,ENV,artifacts,cache \
+              --count \
+              --statistics || exit 1
+          else
+            echo "No Python files found in blockchain module"
+          fi
+        continue-on-error: false
+

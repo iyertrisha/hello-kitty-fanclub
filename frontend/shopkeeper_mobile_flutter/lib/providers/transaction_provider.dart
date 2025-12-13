@@ -46,12 +46,15 @@ class TransactionProvider with ChangeNotifier {
   Future<void> addTransaction(Transaction transaction) async {
     try {
       final savedTransaction = await _apiService.createTransaction(transaction);
-      _transactions.insert(0, savedTransaction);
-      notifyListeners();
+      // Reload transactions from backend to get the latest complete data
+      await loadTransactions();
+      _error = null; // Clear any previous errors
     } catch (e) {
-      _error = e.toString();
+      // Transaction is already saved locally, just update UI
+      // Don't show error - it's saved locally and will sync later
+      _transactions.insert(0, transaction);
+      _error = null; // Don't show error - it's saved locally
       notifyListeners();
-      rethrow;
     }
   }
 

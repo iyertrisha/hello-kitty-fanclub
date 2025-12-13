@@ -3,29 +3,35 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: transparent;
   padding: 20px;
+  position: relative;
 }
 
 .register-card {
-  background: white;
+  background: rgba(26, 10, 10, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--border-medium);
   padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl), var(--glow-red-sm);
   width: 100%;
   max-width: 500px;
   max-height: 90vh;
   overflow-y: auto;
+  position: relative;
+  z-index: 1;
 }
 
 .register-card h1 {
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 10px;
   font-size: 28px;
+  text-shadow: 0 0 20px rgba(255, 69, 105, 0.3);
 }
 
 .register-card h2 {
-  color: #666;
+  color: var(--text-tertiary);
   margin-bottom: 30px;
   font-size: 22px;
   font-weight: 400;
@@ -38,40 +44,46 @@
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  color: #333;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 .form-group input {
   width: 100%;
   padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
   font-size: 16px;
-  transition: border-color 0.3s;
+  background: rgba(26, 10, 10, 0.6);
+  color: var(--text-primary);
+  transition: all 0.3s;
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--border-bright);
+  box-shadow: var(--glow-red-sm);
 }
 
 .submit-btn {
   width: 100%;
   padding: 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 6px;
+  background: var(--btn-primary-bg);
+  border: 1px solid var(--btn-primary-border);
+  color: var(--btn-primary-text);
+  border-radius: var(--radius-sm);
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   margin-top: 10px;
 }
 
 .submit-btn:hover:not(:disabled) {
-  opacity: 0.9;
+  background: var(--btn-primary-hover-bg);
+  border-color: var(--btn-primary-hover-border);
+  box-shadow: var(--btn-primary-hover-glow);
+  transform: translateY(-1px);
 }
 
 .submit-btn:disabled {
@@ -80,27 +92,30 @@
 }
 
 .error-message {
-  background: #fee;
-  color: #c33;
+  background: rgba(255, 69, 105, 0.15);
+  color: var(--neon-red);
   padding: 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   margin-bottom: 20px;
-  border: 1px solid #fcc;
+  border: 1px solid rgba(255, 69, 105, 0.4);
+  box-shadow: var(--glow-red-sm);
 }
 
 .login-link {
   text-align: center;
   margin-top: 20px;
-  color: #666;
+  color: var(--text-tertiary);
 }
 
 .login-link a {
-  color: #667eea;
+  color: var(--neon-red);
   text-decoration: none;
   font-weight: 600;
+  transition: all 0.2s;
 }
 
 .login-link a:hover {
   text-decoration: underline;
+  text-shadow: 0 0 8px rgba(255, 69, 105, 0.5);
 }
 

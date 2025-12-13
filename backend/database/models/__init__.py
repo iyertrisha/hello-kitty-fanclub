@@ -36,7 +36,7 @@ __all__ = [
     'Location',
     'BulkOrder',
     'PendingConfirmation',
-    'Notice'
+    'Notice',
     'Supplier',
     'SupplierOrder',
     'OTPVerification'

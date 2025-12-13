@@ -8,7 +8,8 @@ from .shopkeeper_service import (
     get_inventory,
     register_shopkeeper,
     delete_shopkeeper,
-    toggle_shopkeeper_status
+    toggle_shopkeeper_status,
+    get_or_create_shopkeeper
 )
 
 __all__ = [
@@ -18,6 +19,7 @@ __all__ = [
     'get_inventory',
     'register_shopkeeper',
     'delete_shopkeeper',
-    'toggle_shopkeeper_status'
+    'toggle_shopkeeper_status',
+    'get_or_create_shopkeeper'
 ]
 

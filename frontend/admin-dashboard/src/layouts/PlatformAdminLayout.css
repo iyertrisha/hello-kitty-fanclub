@@ -1,13 +1,13 @@
 .platform-admin-layout {
   display: flex;
   min-height: 100vh;
-  background: #0a0f1c;
+  background: var(--bg-primary);
 }
 
 .platform-sidebar {
   width: 280px;
-  background: linear-gradient(180deg, #0d1221 0%, #0a0f1c 100%);
-  border-right: 1px solid rgba(59, 130, 246, 0.1);
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
   position: fixed;
   height: 100vh;
   display: flex;
@@ -17,7 +17,7 @@
 
 .sidebar-header {
   padding: 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .logo-link {
@@ -36,10 +36,12 @@
   font-family: 'JetBrains Mono', 'SF Mono', monospace;
   font-size: 20px;
   font-weight: 700;
-  background: linear-gradient(135deg, #60a5fa, #34d399);
+  /* Stranger Things style gradient */
+  background: linear-gradient(135deg, #FF1744, #FF8C42);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  text-shadow: 0 0 20px rgba(255, 23, 68, 0.5);
 }
 
 .dashboard-badge {
@@ -51,8 +53,9 @@
 }
 
 .platform-badge {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
-  border: 1px solid rgba(59, 130, 246, 0.25);
+  background: rgba(139, 0, 0, 0.2);
+  border: 1px solid rgba(220, 20, 60, 0.3);
+  box-shadow: var(--glow-red-sm);
 }
 
 .badge-icon {
@@ -62,7 +65,7 @@
 .badge-text {
   font-size: 14px;
   font-weight: 600;
-  color: #60a5fa;
+  color: var(--neon-red);
   letter-spacing: -0.3px;
 }
 
@@ -83,7 +86,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--text-muted);
 }
 
 .nav-menu {
@@ -97,18 +100,19 @@
   flex-direction: column;
   padding: 14px 24px;
   text-decoration: none;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border-left: 3px solid transparent;
   position: relative;
 }
 
 .nav-link:hover {
-  background: rgba(59, 130, 246, 0.06);
+  background: rgba(139, 0, 0, 0.15);
+  border-left-color: rgba(255, 23, 68, 0.5);
 }
 
 .nav-link.active {
-  background: rgba(59, 130, 246, 0.1);
-  border-left-color: #3b82f6;
+  background: rgba(139, 0, 0, 0.25);
+  border-left-color: var(--neon-red);
 }
 
 .nav-link.active::before {
@@ -118,8 +122,8 @@
   top: 0;
   bottom: 0;
   width: 3px;
-  background: linear-gradient(180deg, #60a5fa, #3b82f6);
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
+  background: linear-gradient(180deg, #FF1744, #DC143C);
+  box-shadow: var(--glow-red-md);
 }
 
 .nav-icon {
@@ -130,23 +134,24 @@
 .nav-text {
   font-size: 15px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--text-secondary);
   margin-bottom: 2px;
 }
 
 .nav-subtitle {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-muted);
   font-weight: 400;
 }
 
 .nav-link.active .nav-text {
-  color: #60a5fa;
+  color: var(--neon-red);
+  text-shadow: 0 0 8px rgba(255, 23, 68, 0.5);
 }
 
 .sidebar-footer {
   padding: 20px 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--border-light);
 }
 
 .access-info {
@@ -154,7 +159,8 @@
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
-  background: rgba(59, 130, 246, 0.08);
+  background: rgba(139, 0, 0, 0.15);
+  border: 1px solid rgba(220, 20, 60, 0.25);
   border-radius: 12px;
   margin-bottom: 16px;
 }
@@ -171,12 +177,12 @@
 .access-level {
   font-size: 13px;
   font-weight: 600;
-  color: #60a5fa;
+  color: var(--neon-red);
 }
 
 .access-desc {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--text-muted);
 }
 
 .switch-dashboard-btn {
@@ -186,24 +192,24 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-tertiary);
   text-decoration: none;
   text-align: center;
   font-size: 13px;
   font-weight: 500;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .switch-dashboard-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.8);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(139, 0, 0, 0.1);
+  color: var(--text-secondary);
+  border-color: rgba(220, 20, 60, 0.25);
 }
 
 .platform-main {
   flex: 1;
   margin-left: 280px;
   min-height: 100vh;
-  background: #0a0f1c;
+  background: var(--bg-primary);
 }
 

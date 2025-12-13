@@ -1,0 +1,33 @@
+// Script to fix record_android build.gradle issue
+// This patches the record_android build.gradle to use compileSdkVersion directly instead of flutter.compileSdkVersion
+
+def recordAndroidPath = "${gradle.gradleUserHomeDir}/caches/transforms-*/transformed/record_android-*/android/build.gradle"
+def recordAndroidPubCachePath = "${System.getProperty('user.home')}/.pub-cache/hosted/pub.dev/record_android-*/android/build.gradle"
+
+// Try to find and patch record_android build.gradle
+def patchRecordAndroid = { buildFile ->
+    if (buildFile.exists()) {
+        def content = buildFile.text
+        // Replace flutter.compileSdkVersion with direct value
+        if (content.contains('flutter.compileSdkVersion')) {
+            content = content.replaceAll(/flutter\.compileSdkVersion/, '34')
+            buildFile.text = content
+            println "Patched record_android build.gradle: ${buildFile.path}"
+            return true
+        }
+    }
+    return false
+}
+
+// Try multiple possible locations
+def possiblePaths = [
+    new File("${System.getProperty('user.home')}/.pub-cache/hosted/pub.dev/record_android-1.4.5/android/build.gradle"),
+    new File("${System.getProperty('user.home')}/AppData/Local/Pub/Cache/hosted/pub.dev/record_android-1.4.5/android/build.gradle"),
+]
+
+possiblePaths.each { path ->
+    if (path.exists()) {
+        patchRecordAndroid(path)
+    }
+}
+

@@ -244,3 +244,95 @@ def get_all_credit_scores_route():
         logger.error(f"Error getting credit scores: {e}", exc_info=True)
         raise ValidationError(f"Failed to get credit scores: {str(e)}")
 
+
+# ========== Inventory Seeding ==========
+
+@admin_bp.route('/inventory/seed', methods=['POST'])
+@validate_request(required_fields=['products'])
+def seed_inventory_route():
+    """Seed products from supplier catalog (shared inventory)"""
+    try:
+        data = request.validated_data
+        products_data = data['products']
+        
+        if not isinstance(products_data, list):
+            raise ValidationError("products must be a list")
+        
+        from database.models import Product, Shopkeeper
+        
+        # Optional: shopkeeper_id to seed products for specific shopkeeper
+        # If not provided, products are seeded for all shopkeepers or as template
+        shopkeeper_id = data.get('shopkeeper_id')
+        
+        seeded_products = []
+        errors = []
+        
+        for product_data in products_data:
+            try:
+                # Validate required fields
+                if 'name' not in product_data or 'price' not in product_data:
+                    errors.append(f"Product missing required fields: {product_data.get('name', 'Unknown')}")
+                    continue
+                
+                if shopkeeper_id:
+                    # Seed for specific shopkeeper
+                    try:
+                        shopkeeper = Shopkeeper.objects.get(id=shopkeeper_id)
+                        
+                        # Check if product already exists
+                        existing = Product.objects(
+                            shopkeeper_id=shopkeeper_id,
+                            name=product_data['name']
+                        ).first()
+                        
+                        if existing:
+                            # Update existing product
+                            existing.price = product_data['price']
+                            existing.category = product_data.get('category', existing.category or 'General')
+                            existing.stock_quantity = product_data.get('stock_quantity', existing.stock_quantity)
+                            existing.description = product_data.get('description', existing.description)
+                            existing.save()
+                            seeded_products.append({
+                                'id': str(existing.id),
+                                'name': existing.name,
+                                'action': 'updated'
+                            })
+                        else:
+                            # Create new product
+                            product = Product(
+                                name=product_data['name'],
+                                category=product_data.get('category', 'General'),
+                                price=product_data['price'],
+                                stock_quantity=product_data.get('stock_quantity', 0),
+                                description=product_data.get('description', ''),
+                                shopkeeper_id=shopkeeper_id
+                            )
+                            product.save()
+                            seeded_products.append({
+                                'id': str(product.id),
+                                'name': product.name,
+                                'action': 'created'
+                            })
+                    except Shopkeeper.DoesNotExist:
+                        errors.append(f"Shopkeeper {shopkeeper_id} not found")
+                else:
+                    # Seed as template products (no shopkeeper association)
+                    # This would require a ProductTemplate model or similar
+                    # For now, skip if no shopkeeper_id
+                    errors.append("shopkeeper_id required for seeding")
+                    continue
+            except Exception as e:
+                errors.append(f"Error seeding product {product_data.get('name', 'Unknown')}: {str(e)}")
+        
+        return jsonify({
+            'success': True,
+            'seeded_count': len(seeded_products),
+            'products': seeded_products,
+            'errors': errors,
+            'message': f'Successfully seeded {len(seeded_products)} products'
+        }), 201
+    except ValidationError:
+        raise
+    except Exception as e:
+        logger.error(f"Error seeding inventory: {e}", exc_info=True)
+        raise ValidationError(f"Failed to seed inventory: {str(e)}")

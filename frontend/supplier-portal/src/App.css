@@ -1,5 +1,8 @@
 .App {
   min-height: 100vh;
+  background: transparent;
+  position: relative;
+  z-index: 1;
 }
 
 .loading {
@@ -8,6 +11,6 @@
   align-items: center;
   height: 100vh;
   font-size: 18px;
-  color: #666;
+  color: var(--text-tertiary);
 }
 

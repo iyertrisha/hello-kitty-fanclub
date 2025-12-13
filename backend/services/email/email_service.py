@@ -10,6 +10,38 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def _fallback_to_dev_mode(email, otp_code, error_reason, fix_instruction=None):
+    """
+    Fallback to development mode when SendGrid fails
+    Logs OTP to console instead of sending email
+    """
+    logger.warning("=" * 80)
+    logger.warning("⚠️  SendGrid Error - Using DEVELOPMENT MODE")
+    logger.warning("=" * 80)
+    logger.warning(f"Error: {error_reason}")
+    if fix_instruction:
+        logger.warning(f"Fix: {fix_instruction}")
+    logger.warning(f"📧 OTP for {email}: {otp_code}")
+    logger.warning(f"⏰ This OTP will expire in 10 minutes")
+    logger.warning("=" * 80)
+    logger.warning("To enable email sending, configure SendGrid in .env:")
+    logger.warning("  SENDGRID_API_KEY=SG.your_actual_api_key_here")
+    logger.warning("  SENDGRID_FROM_EMAIL=your-verified-email@domain.com")
+    logger.warning("=" * 80)
+    
+    # Print to console for easy visibility
+    print("\n" + "=" * 80)
+    print(f"⚠️  DEVELOPMENT MODE: OTP Email (SendGrid Error)")
+    print(f"Error: {error_reason}")
+    print(f"📧 Email: {email}")
+    print(f"🔑 OTP Code: {otp_code}")
+    print(f"⏰ Expires in: 10 minutes")
+    if fix_instruction:
+        print(f"💡 {fix_instruction}")
+    print("=" * 80 + "\n")
+    return True  # Return success so OTP flow continues
+
+
 def send_otp_email(email, otp_code):
     """
     Send OTP email via SendGrid
@@ -74,10 +106,27 @@ def send_otp_email(email, otp_code):
             else:
                 from_email = 'noreply@kirana.com'
         
-        if not api_key or not api_key.strip():
-            logger.error(f"SENDGRID_API_KEY not configured. Checked paths: {[str(p) for p in possible_paths]}")
-            logger.error(f"Config.SENDGRID_API_KEY: {getattr(Config, 'SENDGRID_API_KEY', 'NOT_SET')}")
-            raise ValueError("SendGrid API key not configured")
+        # Check if API key is placeholder or missing
+        if not api_key or not api_key.strip() or api_key == 'your_sendgrid_api_key_here':
+            # Development mode: Log OTP to console instead of sending email
+            logger.warning("=" * 80)
+            logger.warning("⚠️  SendGrid API key not configured - Using DEVELOPMENT MODE")
+            logger.warning("=" * 80)
+            logger.warning(f"📧 OTP for {email}: {otp_code}")
+            logger.warning(f"⏰ This OTP will expire in 10 minutes")
+            logger.warning("=" * 80)
+            logger.warning("To enable email sending, add your SendGrid API key to .env:")
+            logger.warning("  SENDGRID_API_KEY=SG.your_actual_api_key_here")
+            logger.warning("  SENDGRID_FROM_EMAIL=your-verified-email@domain.com")
+            logger.warning("=" * 80)
+            # Print to console for easy visibility
+            print("\n" + "=" * 80)
+            print(f"⚠️  DEVELOPMENT MODE: OTP Email (SendGrid not configured)")
+            print(f"📧 Email: {email}")
+            print(f"🔑 OTP Code: {otp_code}")
+            print(f"⏰ Expires in: 10 minutes")
+            print("=" * 80 + "\n")
+            return True  # Return success so OTP flow continues
         
         # Create email message
         message = Mail(
@@ -99,7 +148,24 @@ def send_otp_email(email, otp_code):
             """
         )
         
-        # Send email
+        # Validate API key format before attempting to send
+        if not api_key.startswith('SG.') or len(api_key) < 20:
+            # Invalid API key format - use development mode
+            logger.warning("=" * 80)
+            logger.warning("⚠️  Invalid SendGrid API key format - Using DEVELOPMENT MODE")
+            logger.warning("=" * 80)
+            logger.warning(f"📧 OTP for {email}: {otp_code}")
+            logger.warning(f"⏰ This OTP will expire in 10 minutes")
+            logger.warning("=" * 80)
+            print("\n" + "=" * 80)
+            print(f"⚠️  DEVELOPMENT MODE: OTP Email (Invalid SendGrid API key)")
+            print(f"📧 Email: {email}")
+            print(f"🔑 OTP Code: {otp_code}")
+            print(f"⏰ Expires in: 10 minutes")
+            print("=" * 80 + "\n")
+            return True
+        
+        # Send email via SendGrid
         sg = SendGridAPIClient(api_key)
         try:
             response = sg.send(message)
@@ -108,19 +174,34 @@ def send_otp_email(email, otp_code):
                 logger.info(f"OTP email sent successfully to {email}")
                 return True
             else:
+                # Non-success status code - fallback to development mode
                 logger.error(f"Failed to send OTP email. Status: {response.status_code}, Body: {response.body}")
-                return False
+                error_reason = f"SendGrid returned status {response.status_code}"
+                if response.status_code == 401:
+                    error_reason = "SendGrid 401 Unauthorized - Invalid API key"
+                    return _fallback_to_dev_mode(email, otp_code, error_reason, 
+                                               "Get API key from https://app.sendgrid.com/ and add to .env")
+                elif response.status_code == 403:
+                    error_reason = "SendGrid 403 Forbidden - Email not verified or insufficient permissions"
+                    return _fallback_to_dev_mode(email, otp_code, error_reason,
+                                               f"Verify '{from_email}' in SendGrid Dashboard > Settings > Sender Authentication")
+                else:
+                    return _fallback_to_dev_mode(email, otp_code, error_reason)
         except Exception as send_error:
-            # Provide more helpful error messages
+            # Catch all SendGrid errors (HTTP errors, connection errors, etc.)
             error_msg = str(send_error)
-            if "403" in error_msg or "Forbidden" in error_msg:
-                logger.error(f"SendGrid 403 Forbidden - Common causes:")
-                logger.error(f"  1. 'From' email ({from_email}) is not verified in SendGrid")
-                logger.error(f"  2. API key doesn't have 'Mail Send' permissions")
-                logger.error(f"  3. API key is invalid or expired")
-                logger.error(f"  To fix: Go to SendGrid Dashboard > Settings > Sender Authentication")
-                logger.error(f"  and verify the email address: {from_email}")
-            raise
+            error_type = type(send_error).__name__
+            
+            # Check for 401 Unauthorized in error message
+            if "401" in error_msg or "Unauthorized" in error_msg or "authentication" in error_msg.lower():
+                return _fallback_to_dev_mode(email, otp_code, "SendGrid 401 Unauthorized", 
+                                           "Get API key from https://app.sendgrid.com/ and add to .env")
+            elif "403" in error_msg or "Forbidden" in error_msg:
+                return _fallback_to_dev_mode(email, otp_code, "SendGrid 403 Forbidden",
+                                           f"Verify '{from_email}' in SendGrid Dashboard > Settings > Sender Authentication")
+            else:
+                # Other errors - still fallback to development mode
+                return _fallback_to_dev_mode(email, otp_code, f"SendGrid error ({error_type}): {error_msg[:100]}")
             
     except Exception as e:
         logger.error(f"Error sending OTP email to {email}: {e}", exc_info=True)

@@ -4,17 +4,187 @@
   box-sizing: border-box;
 }
 
+/* CSS Variables - Stranger Things Theme */
+:root {
+  /* Primary Colors - Deep Crimson - Lightened */
+  --crimson-dark: #5B1010;
+  --crimson-base: #9B2020;
+  --crimson-medium: #B53A3A;
+  --crimson-bright: #E15454;
+  
+  /* Neon Red Glow - Lightened */
+  --neon-red: #FF4569;
+  --neon-red-glow: #FF3366;
+  --glow-red-subtle: rgba(255, 69, 105, 0.15);
+  --glow-red-medium: rgba(255, 69, 105, 0.3);
+  --glow-red-strong: rgba(255, 51, 102, 0.4);
+  
+  /* Dark Maroon */
+  --maroon-dark: #4B0000;
+  --maroon-base: #800020;
+  
+  /* Charcoal Black */
+  --black-charcoal: #0a0a0a;
+  --black-dark: #1a1a1a;
+  --black-medium: #2a1a1a;
+  
+  /* Orange Accents */
+  --orange-subtle: #FF8C42;
+  --orange-medium: #FF6B35;
+  
+  /* Background Colors */
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #1a0a0a;
+  --bg-tertiary: #1a1a1a;
+  --bg-card: rgba(26, 10, 10, 0.6);
+  --bg-card-hover: rgba(139, 0, 0, 0.2);
+  
+  /* Text Colors */
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.75);
+  --text-tertiary: rgba(255, 255, 255, 0.55);
+  --text-muted: rgba(255, 255, 255, 0.4);
+  --text-accent: #FF1744;
+  --text-accent-orange: #FF8C42;
+  
+  /* Border Colors */
+  --border-light: rgba(220, 20, 60, 0.08);
+  --border-medium: rgba(220, 20, 60, 0.15);
+  --border-bright: rgba(255, 23, 68, 0.3);
+  
+  /* Button Colors - Stranger Things Theme (Lightened Reds) */
+  --btn-primary-bg: rgba(139, 0, 0, 0.4);
+  --btn-primary-border: rgba(255, 69, 105, 0.6);
+  --btn-primary-text: #ffffff;
+  --btn-primary-hover-bg: rgba(139, 0, 0, 0.6);
+  --btn-primary-hover-border: rgba(255, 69, 105, 0.9);
+  --btn-primary-hover-glow: 0 0 15px rgba(255, 69, 105, 0.5);
+  
+  --btn-danger-bg: rgba(255, 69, 105, 0.2);
+  --btn-danger-border: rgba(255, 69, 105, 0.6);
+  --btn-danger-text: var(--neon-red);
+  --btn-danger-hover-bg: rgba(255, 69, 105, 0.35);
+  --btn-danger-hover-border: rgba(255, 69, 105, 0.9);
+  --btn-danger-hover-glow: 0 0 16px rgba(255, 69, 105, 0.6);
+  
+  --btn-secondary-bg: rgba(26, 10, 10, 0.6);
+  --btn-secondary-border: rgba(255, 69, 105, 0.4);
+  --btn-secondary-text: rgba(255, 255, 255, 0.85);
+  --btn-secondary-hover-bg: rgba(139, 0, 0, 0.3);
+  --btn-secondary-hover-border: rgba(255, 69, 105, 0.6);
+  
+  --btn-logout-bg: rgba(255, 69, 105, 0.15);
+  --btn-logout-border: rgba(255, 69, 105, 0.5);
+  --btn-logout-text: var(--neon-red);
+  --btn-logout-hover-bg: rgba(255, 69, 105, 0.25);
+  --btn-logout-hover-border: rgba(255, 69, 105, 0.8);
+  --btn-logout-hover-glow: 0 0 12px rgba(255, 69, 105, 0.5);
+  
+  /* Status Colors */
+  --success: rgba(52, 211, 153, 0.8);
+  --warning: rgba(255, 184, 53, 0.8);
+  --error: #FF1744;
+  --info: rgba(255, 140, 66, 0.8);
+  
+  /* Shadows & Glows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+  
+  --glow-red-sm: 0 0 8px rgba(255, 23, 68, 0.3);
+  --glow-red-md: 0 0 16px rgba(255, 23, 68, 0.4);
+  --glow-red-lg: 0 0 24px rgba(255, 0, 0, 0.5);
+  --glow-orange-sm: 0 0 8px rgba(255, 140, 66, 0.2);
+  
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f5f5;
+  background-color: var(--bg-primary);
+  background-image: 
+    radial-gradient(ellipse at top, rgba(70, 10, 150, 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at center, rgba(255, 69, 105, 0.25) 0%, rgba(200, 30, 80, 0.15) 40%, transparent 70%),
+    radial-gradient(ellipse at bottom, rgba(20, 20, 60, 0.4) 0%, transparent 50%),
+    linear-gradient(180deg, #0a0a1a 0%, #1a0a1a 30%, #1a1a2a 60%, #0a0a1a 100%);
+  background-attachment: fixed;
+  background-size: 100% 100%, 120% 120%, 100% 100%, 100% 100%;
+  background-position: center top, center center, center bottom, center;
+  color: var(--text-primary);
+  min-height: 100vh;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(255, 69, 105, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 80% 50%, rgba(100, 150, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 50% 20%, rgba(150, 50, 200, 0.1) 0%, transparent 50%);
+  background-attachment: fixed;
+  pointer-events: none;
+  z-index: 0;
+  animation: cosmicDrift 20s ease-in-out infinite alternate;
+}
+
+@keyframes cosmicDrift {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(2%, 2%) scale(1.1);
+    opacity: 1;
+  }
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(26, 10, 10, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(220, 20, 60, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 23, 68, 0.5);
+  box-shadow: var(--glow-red-sm);
+}
+
+/* Selection */
+::selection {
+  background: rgba(255, 23, 68, 0.3);
+  color: #ffffff;
+}
+
+/* Focus States */
+*:focus-visible {
+  outline: 2px solid rgba(255, 23, 68, 0.5);
+  outline-offset: 2px;
+  box-shadow: var(--glow-red-sm);
 }
 

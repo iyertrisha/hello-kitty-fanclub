@@ -9,7 +9,7 @@ This document explains the complete flow from voice input to blockchain storage 
 ```
 🎤 Voice Input
     ↓
-📝 Speech-to-Text (Python speech_recognition)
+📝 Speech-to-Text (Python speech_recognition
     ↓
 🔍 Parse Transaction (Extract product, quantity, amount)
     ↓

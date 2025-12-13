@@ -91,6 +91,19 @@ class BlockchainService:
             # Get gas price
             gas_price = self.w3.eth.gas_price
 
+            # FIXED: Check if wallet has sufficient balance for gas fees
+            account_balance = self.w3.eth.get_balance(self.address)
+            estimated_gas_cost = gas_limit * gas_price
+            
+            if account_balance < estimated_gas_cost:
+                error_msg = (
+                    f"Insufficient balance for gas fees. "
+                    f"Required: {estimated_gas_cost / 1e18:.6f} ETH/MATIC, "
+                    f"Available: {account_balance / 1e18:.6f} ETH/MATIC"
+                )
+                logger.error(f"❌ {error_msg}")
+                return {"success": False, "error": error_msg}
+
             # Build transaction
             transaction = tx_function(*args).build_transaction(
                 {

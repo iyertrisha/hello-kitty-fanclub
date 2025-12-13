@@ -50,3 +50,7 @@ twilio>=8.0.0
 google-cloud-dialogflow>=2.0.0
 # Email service
 sendgrid>=6.9.0
+
+# QR Code generation
+qrcode[pil]>=7.4.2
+Pillow>=10.0.0

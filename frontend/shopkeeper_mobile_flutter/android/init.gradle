@@ -1,0 +1,25 @@
+// Gradle init script to fix record_android compileSdkVersion issue
+allprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            def android = project.android
+            // Fix for record_android: ensure compileSdkVersion is set
+            if (android.hasProperty('compileSdkVersion')) {
+                try {
+                    def currentSdk = android.compileSdkVersion
+                    if (currentSdk == null || currentSdk.toString().isEmpty()) {
+                        android.compileSdkVersion = 34
+                    }
+                } catch (Exception e) {
+                    // Try alternative approach
+                    try {
+                        android.compileSdkVersion = 34
+                    } catch (Exception e2) {
+                        // Ignore if can't set
+                    }
+                }
+            }
+        }
+    }
+}
+

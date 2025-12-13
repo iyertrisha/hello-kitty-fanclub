@@ -16,6 +16,5 @@ __all__ = [
     'get_supplier',
     'update_supplier_service_area',
     'get_stores_in_service_area',
-    'create_bulk_order'
+    'create_bulk_order',
 ]
-
