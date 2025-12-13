@@ -56,9 +56,18 @@ async function handleCatalogMenu(client, message, phone, selection) {
     }
   } catch (error) {
     console.error('Error displaying catalog:', error);
-    await client.sendMessage(message.from, 
-      menuRenderer.renderError('Failed to load product catalog. Please try again later.')
-    );
+    
+    let errorMsg = 'Failed to load product catalog. Please try again later.';
+    
+    // Check for connection errors
+    if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT' || error.message?.includes('ECONNREFUSED')) {
+      errorMsg = '⚠️ Backend server is not available. Please ensure the Flask backend is running on port 5000.';
+      console.error('Backend connection error - Flask server may not be running');
+    } else if (error.response) {
+      errorMsg = error.response.data?.error || errorMsg;
+    }
+    
+    await client.sendMessage(message.from, menuRenderer.renderError(errorMsg));
     menuState.clearState(phone);
   }
 }

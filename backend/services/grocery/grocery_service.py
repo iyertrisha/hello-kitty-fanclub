@@ -4,7 +4,8 @@ Grocery service - Core business logic for grocery ordering
 from database.models import Product, Shopkeeper, Customer
 from api.middleware.error_handler import NotFoundError, ValidationError
 from services.transaction import create_transaction
-from services.debt import get_customer_by_phone
+from services.debt import normalize_phone
+from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)
@@ -194,6 +195,49 @@ def calculate_bill(items):
     return round(total, 2)
 
 
+def get_or_create_customer_by_phone(phone, shopkeeper_id=None):
+    """
+    Get customer by phone or create if doesn't exist (for WhatsApp bot)
+    
+    Args:
+        phone: Phone number
+        shopkeeper_id: Optional shopkeeper ID to set as default
+    
+    Returns:
+        Customer: Customer object
+    """
+    # Normalize phone
+    phone = normalize_phone(phone)
+    
+    try:
+        customer = Customer.objects.get(phone=phone)
+        return customer
+    except Customer.DoesNotExist:
+        # Auto-create customer for WhatsApp bot
+        logger.info(f"Auto-creating customer for phone {phone}")
+        
+        # Get shopkeeper if provided
+        shopkeeper = None
+        if shopkeeper_id:
+            try:
+                shopkeeper = Shopkeeper.objects.get(id=shopkeeper_id)
+            except Shopkeeper.DoesNotExist:
+                logger.warning(f"Shopkeeper {shopkeeper_id} not found, creating customer without default shopkeeper")
+        
+        # Create customer with minimal info (name will be phone number for now)
+        customer = Customer(
+            name=f"Customer {phone[-4:]}",  # Use last 4 digits as temporary name
+            phone=phone,
+            default_shopkeeper_id=shopkeeper,
+            whatsapp_enabled=True,
+            last_whatsapp_message_at=datetime.utcnow()
+        )
+        customer.save()
+        
+        logger.info(f"Created new customer {customer.id} with phone {phone}")
+        return customer
+
+
 def create_grocery_order(customer_phone, items, shopkeeper_id):
     """
     Create grocery order and transaction
@@ -215,14 +259,21 @@ def create_grocery_order(customer_phone, items, shopkeeper_id):
     if not items or len(items) == 0:
         raise ValidationError("Order items cannot be empty")
     
-    # Get customer
-    customer = get_customer_by_phone(customer_phone)
-    
-    # Get shopkeeper
+    # Get shopkeeper first (needed for customer creation)
     try:
         shopkeeper = Shopkeeper.objects.get(id=shopkeeper_id)
     except Shopkeeper.DoesNotExist:
         raise NotFoundError(f"Shopkeeper {shopkeeper_id} not found")
+    
+    # Get or create customer (auto-create if doesn't exist)
+    customer = get_or_create_customer_by_phone(customer_phone, shopkeeper_id=shopkeeper_id)
+    
+    # Update customer's last WhatsApp message timestamp
+    customer.last_whatsapp_message_at = datetime.utcnow()
+    # Set default shopkeeper if not already set
+    if not customer.default_shopkeeper_id:
+        customer.default_shopkeeper_id = shopkeeper
+    customer.save()
     
     # Calculate total
     total = calculate_bill(items)

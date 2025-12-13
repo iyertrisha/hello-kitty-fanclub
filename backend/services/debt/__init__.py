@@ -9,7 +9,8 @@ from .debt_service import (
     format_debt_summary,
     get_first_debt_date,
     get_debt_statistics,
-    get_customer_by_phone
+    get_customer_by_phone,
+    normalize_phone
 )
 
 __all__ = [
@@ -20,6 +21,7 @@ __all__ = [
     'format_debt_summary',
     'get_first_debt_date',
     'get_debt_statistics',
-    'get_customer_by_phone'
+    'get_customer_by_phone',
+    'normalize_phone'
 ]
 

@@ -13,7 +13,7 @@ from .transaction_service import (
     create_pending_confirmation,
     get_pending_confirmation_by_phone,
     update_pending_confirmation_status,
-    expire_old_confirmations
+    expire_old_confirmations,
     get_blockchain_service
 )
 
@@ -29,7 +29,7 @@ __all__ = [
     'create_pending_confirmation',
     'get_pending_confirmation_by_phone',
     'update_pending_confirmation_status',
-    'expire_old_confirmations'
+    'expire_old_confirmations',
     'get_blockchain_service'
 ]
 

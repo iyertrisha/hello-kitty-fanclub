@@ -118,8 +118,15 @@ async function handleGroceryList(client, message, phone, listText) {
     console.error('Error processing grocery list:', error);
     
     let errorMsg = 'Sorry, I encountered an error processing your grocery list.';
-    if (error.response) {
+    
+    // Check for connection errors
+    if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT' || error.message?.includes('ECONNREFUSED')) {
+      errorMsg = '⚠️ Backend server is not available. Please ensure the Flask backend is running on port 5000.';
+      console.error('Backend connection error - Flask server may not be running');
+    } else if (error.response) {
       errorMsg = error.response.data?.error || errorMsg;
+    } else if (error.message) {
+      errorMsg = error.message;
     }
     
     await client.sendMessage(message.from, menuRenderer.renderError(errorMsg));
@@ -216,8 +223,15 @@ async function handleGroceryConfirm(client, message, phone, confirmation) {
       console.error('Error creating order:', error);
       
       let errorMsg = 'Sorry, I encountered an error creating your order.';
-      if (error.response) {
+      
+      // Check for connection errors
+      if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT' || error.message?.includes('ECONNREFUSED')) {
+        errorMsg = '⚠️ Backend server is not available. Please ensure the Flask backend is running on port 5000.';
+        console.error('Backend connection error - Flask server may not be running');
+      } else if (error.response) {
         errorMsg = error.response.data?.error || errorMsg;
+      } else if (error.message) {
+        errorMsg = error.message;
       }
       
       await client.sendMessage(message.from, menuRenderer.renderError(errorMsg));

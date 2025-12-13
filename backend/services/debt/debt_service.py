@@ -34,6 +34,26 @@ except Exception as e:
     logger.warning(f"Error loading blockchain service: {e}")
 
 
+def normalize_phone(phone):
+    """
+    Normalize phone number to ensure consistency (add + prefix if missing)
+    
+    Args:
+        phone: Phone number string
+    
+    Returns:
+        str: Normalized phone number with + prefix
+    """
+    if not phone:
+        return phone
+    
+    phone = phone.strip()
+    if not phone.startswith('+'):
+        phone = f'+{phone.lstrip("+")}'
+    
+    return phone
+
+
 def get_customer_by_phone(phone):
     """
     Get customer by phone number
@@ -45,8 +65,7 @@ def get_customer_by_phone(phone):
         Customer: Customer object
     """
     # Normalize phone
-    if not phone.startswith('+'):
-        phone = f'+{phone.lstrip("+")}'
+    phone = normalize_phone(phone)
     
     try:
         customer = Customer.objects.get(phone=phone)
@@ -76,6 +95,10 @@ def get_customer_debt(customer_id=None, phone=None):
         customer = get_customer_by_phone(phone)
     else:
         raise ValidationError("Either customer_id or phone must be provided")
+    
+    # Update last WhatsApp message timestamp for queries too
+    customer.last_whatsapp_message_at = datetime.utcnow()
+    customer.save()
     
     # Get recent credit transactions (last 30 days)
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
@@ -118,7 +141,7 @@ def record_debt_entry(customer_id=None, phone=None, shopkeeper_id=None, amount=N
     Args:
         customer_id: Customer ID (optional)
         phone: Phone number (optional, used if customer_id not provided)
-        shopkeeper_id: Shopkeeper ID (required)
+        shopkeeper_id: Shopkeeper ID (optional, will use customer's default_shopkeeper_id if not provided)
         amount: Debt amount
         description: Description/notes for the debt
     
@@ -128,9 +151,6 @@ def record_debt_entry(customer_id=None, phone=None, shopkeeper_id=None, amount=N
     # Validate required fields
     if not amount or amount <= 0:
         raise ValidationError("Amount must be greater than 0")
-    
-    if not shopkeeper_id:
-        raise ValidationError("shopkeeper_id is required")
     
     # Get customer
     if customer_id:
@@ -142,6 +162,20 @@ def record_debt_entry(customer_id=None, phone=None, shopkeeper_id=None, amount=N
         customer = get_customer_by_phone(phone)
     else:
         raise ValidationError("Either customer_id or phone must be provided")
+    
+    # Get shopkeeper - use customer's default if not provided
+    if not shopkeeper_id:
+        if customer.default_shopkeeper_id:
+            shopkeeper_id = str(customer.default_shopkeeper_id.id)
+        else:
+            # Fallback to first shopkeeper if no default set
+            shopkeeper = Shopkeeper.objects.first()
+            if not shopkeeper:
+                raise ValidationError("No shopkeeper found. Please register a shopkeeper first.")
+            shopkeeper_id = str(shopkeeper.id)
+            # Optionally set this as the customer's default shopkeeper
+            customer.default_shopkeeper_id = shopkeeper
+            customer.save()
     
     # Get shopkeeper
     try:
@@ -160,6 +194,10 @@ def record_debt_entry(customer_id=None, phone=None, shopkeeper_id=None, amount=N
     }
     
     transaction = create_transaction(transaction_data)
+    
+    # Update customer's last WhatsApp message timestamp
+    customer.last_whatsapp_message_at = datetime.utcnow()
+    customer.save()
     
     # Record on blockchain if available
     blockchain_tx_id = None
@@ -255,11 +293,15 @@ def record_payment(customer_id=None, phone=None, amount=None):
             f"Payment amount (₹{amount}) exceeds outstanding balance (₹{customer.credit_balance})"
         )
     
-    # Get shopkeeper (use first shopkeeper for now, or make it configurable)
-    # In production, you might want to track which shopkeeper the payment is for
-    shopkeeper = Shopkeeper.objects.first()
-    if not shopkeeper:
-        raise ValidationError("No shopkeeper found. Please register a shopkeeper first.")
+    # Get shopkeeper - use customer's default if available
+    shopkeeper = None
+    if customer.default_shopkeeper_id:
+        shopkeeper = customer.default_shopkeeper_id
+    else:
+        # Fallback to first shopkeeper if no default set
+        shopkeeper = Shopkeeper.objects.first()
+        if not shopkeeper:
+            raise ValidationError("No shopkeeper found. Please register a shopkeeper first.")
     
     previous_balance = float(customer.credit_balance)
     
@@ -274,6 +316,10 @@ def record_payment(customer_id=None, phone=None, amount=None):
     }
     
     transaction = create_transaction(transaction_data)
+    
+    # Update customer's last WhatsApp message timestamp
+    customer.last_whatsapp_message_at = datetime.utcnow()
+    customer.save()
     
     # Record on blockchain if available
     blockchain_tx_id = None

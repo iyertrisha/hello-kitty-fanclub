@@ -68,12 +68,17 @@ class Customer(Document):
     total_purchases = FloatField(default=0.0)
     total_credits = FloatField(default=0.0)
     credit_balance = FloatField(default=0.0)
+    default_shopkeeper_id = ReferenceField('Shopkeeper')  # Primary shopkeeper for WhatsApp bot
+    whatsapp_enabled = BooleanField(default=True)  # Whether customer can use WhatsApp bot
+    last_whatsapp_message_at = DateTimeField()  # Last WhatsApp interaction timestamp
     
     meta = {
         'collection': 'customers',
         'indexes': [
             'phone',
-            'created_at'
+            'created_at',
+            'default_shopkeeper_id',
+            'whatsapp_enabled'
         ]
     }
 
@@ -222,6 +227,10 @@ class Notice(Document):
             'priority',
             ('shopkeeper_id', 'is_active'),
             ('shopkeeper_id', 'priority')
+        ]
+    }
+
+
 class Supplier(Document):
     """Supplier/Vendor model"""
     name = StringField(required=True, max_length=200)

@@ -32,8 +32,31 @@ def get_customer(customer_id):
         'created_at': customer.created_at.isoformat() if customer.created_at else None,
         'total_purchases': customer.total_purchases,
         'total_credits': customer.total_credits,
-        'credit_balance': customer.credit_balance
+        'credit_balance': customer.credit_balance,
+        'default_shopkeeper_id': str(customer.default_shopkeeper_id.id) if customer.default_shopkeeper_id else None,
+        'whatsapp_enabled': customer.whatsapp_enabled,
+        'last_whatsapp_message_at': customer.last_whatsapp_message_at.isoformat() if customer.last_whatsapp_message_at else None
     }
+
+
+def normalize_phone(phone):
+    """
+    Normalize phone number to ensure consistency (add + prefix if missing)
+    
+    Args:
+        phone: Phone number string
+    
+    Returns:
+        str: Normalized phone number with + prefix
+    """
+    if not phone:
+        return phone
+    
+    phone = phone.strip()
+    if not phone.startswith('+'):
+        phone = f'+{phone.lstrip("+")}'
+    
+    return phone
 
 
 def create_customer(data):
@@ -52,20 +75,25 @@ def create_customer(data):
         if field not in data:
             raise ValidationError(f"Missing required field: {field}")
     
+    # Normalize phone number
+    normalized_phone = normalize_phone(data['phone'])
+    
     # Check if customer with phone already exists
-    if Customer.objects(phone=data['phone']).first():
+    if Customer.objects(phone=normalized_phone).first():
         raise ValidationError("Customer with this phone number already exists")
     
     # Create customer
     customer = Customer(
         name=data['name'],
-        phone=data['phone'],
-        address=data.get('address')
+        phone=normalized_phone,
+        address=data.get('address'),
+        default_shopkeeper_id=data.get('default_shopkeeper_id'),
+        whatsapp_enabled=data.get('whatsapp_enabled', True)
     )
     
     customer.save()
     
-    logger.info(f"Created new customer {customer.id} with phone {data['phone']}")
+    logger.info(f"Created new customer {customer.id} with phone {normalized_phone}")
     
     return customer
 

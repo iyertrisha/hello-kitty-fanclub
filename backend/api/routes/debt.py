@@ -65,17 +65,12 @@ def record_debt_route():
         amount = float(data['amount'])
         description = data.get('description', 'Debt entry via WhatsApp')
         
-        # Get shopkeeper_id - use first shopkeeper if not provided
+        # shopkeeper_id is now optional - debt service will use customer's default_shopkeeper_id
         shopkeeper_id = data.get('shopkeeper_id')
-        if not shopkeeper_id:
-            shopkeeper = Shopkeeper.objects.first()
-            if not shopkeeper:
-                raise ValidationError("No shopkeeper found. Please register a shopkeeper first.")
-            shopkeeper_id = str(shopkeeper.id)
         
         result = record_debt_entry(
             phone=phone,
-            shopkeeper_id=shopkeeper_id,
+            shopkeeper_id=shopkeeper_id,  # Optional - will use customer's default if not provided
             amount=amount,
             description=description
         )
